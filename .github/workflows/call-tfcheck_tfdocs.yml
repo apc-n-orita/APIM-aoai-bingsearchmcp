@@ -1,0 +1,28 @@
+name: Call TFCheck and TFDocs
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "**/*.tf"
+      - ".github/workflows/*.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  call-tfcheck:
+    uses: ./.github/workflows/tflint-and-checks.yml
+    with:
+      working-directory: "${GITHUB_WORKSPACE}"
+      tflint-version: "latest"
+      enable-terraform-format-check: true
+      enable-terraform-lint-check: false # TFLintチェックを有効にする場合はtrueに設定してください
+      enable-gha-lint-check: true # GHA Lintチェックを有効にする場合はtrueに設定してください
+
+  call-tfdocs:
+    needs: call-tfcheck
+    uses: ./.github/workflows/tfdocs.yml
+    with:
+      working-directory: "."
+      pr-ref: ${{ github.event.pull_request.head.ref }}
