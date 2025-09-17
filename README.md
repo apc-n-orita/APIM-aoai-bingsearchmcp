@@ -1,74 +1,142 @@
-# Azure Developer CLI (azd) Terraform Starter
+# AOAI×Bing Search MCP の API 公開
 
-A starter blueprint for getting your application up on Azure using [Azure Developer CLI](https://learn.microsoft.com/en-us/azure/developer/azure-developer-cli/overview) (azd). Add your application code, write Infrastructure as Code assets in Terraform to get your application up and running quickly.
+近年、プラットフォームエンジニアリングの分野では生成 AI の活用が広がっています。  
+本プロジェクトは、Azure OpenAI Service と Bing Search MCP を API として公開するサンプル構成を提供します。
 
-The following assets have been provided:
+## 構成概要
 
-- Infrastructure-as-code (IaC) Terraform modules under the `infra` directory that demonstrate how to provision resources and setup resource tagging for azd.
-- A [dev container](https://containers.dev) configuration file under the `.devcontainer` directory that installs infrastructure tooling by default. This can be readily used to create cloud-hosted developer environments such as [GitHub Codespaces](https://aka.ms/codespaces).
-- Continuous deployment workflows for CI providers such as GitHub Actions under the `.github` directory, and Azure Pipelines under the `.azdo` directory that work for most use-cases.
+![構成図](./assets/1.png)
 
-## Next Steps
+詳細な構成については、[こちらの資料](https://www.docswell.com/s/windagecat/Z2N339-2025-07-26-165303)をご参照ください。
 
-### Step 1: Add application code
+---
 
-1. Initialize the service source code projects anywhere under the current directory. Ensure that all source code projects can be built successfully.
-    - > Note: For `function` services, it is recommended to initialize the project using the provided [quickstart tools](https://learn.microsoft.com/en-us/azure/azure-functions/functions-get-started).
-2. Once all service source code projects are building correctly, update `azure.yaml` to reference the source code projects.
-3. Run `azd package` to validate that all service source code projects can be built and packaged locally.
+## デプロイ手順
 
-### Step 2: Provision Azure resources
+### パラメータ設定
 
-Update or add Terraform modules to provision the relevant Azure resources. This can be done incrementally, as the list of [Azure resources](https://learn.microsoft.com/en-us/azure/?product=popular) are explored and added.
+1. `infra/variables.tf` で必要な変数（location, environment_name, subscription_id, openai, bingsearch_ai など）を確認します。
+2. `infra/main.tfvars.json` を編集し、各変数値を設定します。
 
-- All Azure resources available in Terraform format can be found [here](https://learn.microsoft.com/en-us/azure/templates/).
+   - **`${openai.model.model}`は、必ずチャット完了(chat-completion)に対応したモデル**を指定してください。
+   - 下記 3 つの変数は、**必ず `${AZURE_LOCATION}` `${AZURE_ENV_NAME}` `${AZURE_SUBSCRIPTION_ID}` のまま記載してください。**
+     - `"location": "${AZURE_LOCATION}"`
+     - `"environment_name": "${AZURE_ENV_NAME}"`
+     - `"subscription_id": "${AZURE_SUBSCRIPTION_ID}"`
 
-Run `azd provision` whenever you want to ensure that changes made are applied correctly and work as expected.
+   **設定例:**
 
-### Step 3: Tie in application and infrastructure
+   ```json
+   {
+     "location": "${AZURE_LOCATION}",
+     "environment_name": "${AZURE_ENV_NAME}",
+     "subscription_id": "${AZURE_SUBSCRIPTION_ID}",
+     "openai": {
+       "locations": ["canadaeast", "swedencentral"],
+       "model": {
+         "model": "gpt-4o",
+         "version": "2024-11-20",
+         "deploytype": "Standard",
+         "capacity": 48
+       }
+     },
+     "bingsearch_ai": {
+       "location": "westus",
+       "model": {
+         "model": "gpt-4.1-nano",
+         "version": "2025-04-14",
+         "format": "OpenAI",
+         "deploytype": "GlobalStandard",
+         "capacity": 47
+       }
+     }
+   }
+   ```
 
-Certain changes to Terraform modules or deployment manifests are required to tie in application and infrastructure together. For example:
+### デプロイ実行
 
-1. Set up [application settings](#application-settings) for the code running in Azure to connect to other Azure resources.
-1. If you are accessing sensitive resources in Azure, set up [managed identities](#managed-identities) to allow the code running in Azure to securely access the resources.
-1. If you have secrets, it is recommended to store secrets in [Azure Key Vault](#azure-key-vault) that then can be retrieved by your application, with the use of managed identities.
-1. Configure [host configuration](#host-configuration) on your hosting platform to match your application's needs. This may include networking options, security options, or more advanced configuration that helps you take full advantage of Azure capabilities.
+以下のコマンドを実行します。
 
-For more details, see [additional details](#additional-details) below.
+```bash
+azd up
+```
 
-When changes are made, use azd to apply your changes in Azure and validate that they are working as expected:
+---
 
-- Run `azd up` to validate both infrastructure and application code changes.
-- Run `azd deploy` to validate application code changes.
+### Grafana による可視化ダッシュボードの Terraform 適用（任意）
 
-### Step 4: Up to Azure
+Grafana による可視化ダッシュボードはオプションです。興味がある方は以下を実行してください。
 
-Finally, run `azd up` to run the end-to-end infrastructure provisioning (`azd provision`) and deployment (`azd deploy`) flow. Visit the service endpoints listed to see your application up-and-running!
+1. 環境変数 `GRAFANA_AUTH` のセット
 
-## Additional Details
+   ```bash
+   # <GRAFANA_WORKSPACE_NAME>は、azd upで出力された Grafana ワークスペース名を指定してください。
+   az grafana service-account create \
+     --name <GRAFANA_WORKSPACE_NAME> \
+     --service-account "api" \
+     --role Admin
 
-The following section examines different concepts that help tie in application and infrastructure.
+   export GRAFANA_AUTH=$(az grafana service-account token create \
+     --name <GRAFANA_WORKSPACE_NAME> \
+     --service-account "api" \
+     --token "token" --time-to-live 7d \
+     --query key -o tsv)
+   ```
 
-### Application settings
+2. デプロイ実行
 
-It is recommended to have application settings managed in Azure, separating configuration from code. Typically, the service host allows for application settings to be defined.
+   ```bash
+   cd gra_tf
+   terraform init
+   terraform apply
+   ```
 
-- For `appservice` and `function`, application settings should be defined on the Terraform resource for the targeted host. Reference template example [here](https://github.com/Azure-Samples/todo-nodejs-mongo-terraform/tree/main/infra).
-- For `aks`, application settings are applied using deployment manifests under the `<service>/manifests` folder. Reference template example [here](https://github.com/Azure-Samples/todo-nodejs-mongo-aks/tree/main/src/api/manifests).
+   > `terraform.tfvars` は「azd up」実行時に出力済みです。
 
-### Managed identities
+---
 
-[Managed identities](https://learn.microsoft.com/en-us/azure/active-directory/managed-identities-azure-resources/overview) allows you to secure communication between services. This is done without having the need for you to manage any credentials.
+## AOAI×Bing Search MCP のテスト
 
-### Azure Key Vault
+### roo code を使った MCP テスト手順
 
-[Azure Key Vault](https://learn.microsoft.com/en-us/azure/key-vault/general/overview) allows you to store secrets securely. Your application can access these secrets securely through the use of managed identities.
+1. **AI プロバイダーの設定**
 
-### Host configuration
+   - ベース URL に「azd up」実行時に出力された `SERVICE_AOAI_ENDPOINTS` を指定します。
+   - モデルは `infra/main.tfvars.json` で設定したものを選択してください。
+   - API キーには、**APIM のサブスクリプションキー**（Azure ポータル → APIM 名 → 製品 → 「sa ai api」で確認可能）を指定してください。
 
-For `appservice`, the following host configuration options are often modified:
+   ![AIプロバイダー設定例](./assets/2.png)
 
-- Language runtime version
-- Exposed port from the running container (if running a web service)
-- Allowed origins for CORS (Cross-Origin Resource Sharing) protection (if running a web service backend with a frontend)
-- The run command that starts up your service
+2. **MCP サーバー設定例**
+
+   ```json
+   {
+     "servers": {
+       "bingsearch-server": {
+         "type": "sse",
+         "url": "<出力されたSERVICE_BINGSEARCHMCP_ENDPOINTS>",
+         "headers": {
+           "Ocp-Apim-Subscription-Key": "<1.と同じAPIMのサブスクリプションキー>"
+         },
+         "timeout": 300
+       }
+     }
+   }
+   ```
+
+3. チャット画面で「現在 1 ドルいくらですか」と入力し、実行
+
+---
+
+### MCP Inspector を利用した Oauth MCP テストの実行
+
+1. MCP Inspector をインストールして実行
+
+   ```bash
+   npx @modelcontextprotocol/inspector
+   ```
+
+2. 表示された URL（例：http://localhost:6274/?MCP_PROXY_AUTH_TOKEN=xxxxxx）から MCP Inspector にアクセス
+3. トランスポートタイプを `SSE` に設定
+4. `azd up` の出力に表示された API Management SSE エンドポイントの URL (`SERVICE_OAUTH_BINGSEARCHMCP_ENDPOINTS`) を設定し、**Connect**
+5. **List Tools**タブの中からツールを選択し、**Run Tool**をクリック
