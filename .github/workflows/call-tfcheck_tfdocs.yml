@@ -6,6 +6,10 @@ on:
     paths:
       - "**/*.tf"
       - ".github/workflows/*.yml"
+
+permissions:
+  contents: write
+
 jobs:
   call-tfcheck:
     uses: ./.github/workflows/tflint-and-checks.yml
