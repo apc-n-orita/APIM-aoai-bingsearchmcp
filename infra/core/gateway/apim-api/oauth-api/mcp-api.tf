@@ -38,7 +38,7 @@ resource "azuread_application_federated_identity_credential" "fic" {
   description    = "Trust the user-assigned MI as a credential for the app"
   audiences      = ["api://AzureADTokenExchange"]
   issuer         = "https://login.microsoftonline.com/${var.entra_app_tenant_id}/v2.0"
-  subject        = var.entra_app_uami_principle_id
+  subject        = var.entra_app_uami_principal_id
 }
 
 

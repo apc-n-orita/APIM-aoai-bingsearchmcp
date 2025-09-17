@@ -24,7 +24,7 @@ variable "entra_app_display_name" {
   description = "The display name of the Entra application."
 }
 
-variable "entra_app_uami_principle_id" {
+variable "entra_app_uami_principal_id" {
   type        = string
   description = "The principal ID of the user-assigned managed identity."
 }

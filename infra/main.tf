@@ -517,7 +517,7 @@ module "oauth_api" {
   entra_app_tenant_id         = data.azuread_client_config.current.tenant_id
   entra_app_uami_client_id    = azurerm_user_assigned_identity.apim_entraid.client_id
   entra_app_display_name      = "mcp-oauth-test-${substr(local.resource_token, 0, 3)}"
-  entra_app_uami_principle_id = azurerm_user_assigned_identity.apim_entraid.principal_id
+  entra_app_uami_principal_id = azurerm_user_assigned_identity.apim_entraid.principal_id
   azureuser_object_id         = data.azuread_client_config.current.object_id
 }
 
