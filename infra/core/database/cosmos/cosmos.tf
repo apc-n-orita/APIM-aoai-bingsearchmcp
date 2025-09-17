@@ -67,7 +67,7 @@ resource "azurerm_cosmosdb_mongo_collection" "list" {
 
 
   index {
-    keys   = ["_id"]
+    keys = ["_id"]
   }
 }
 
@@ -79,6 +79,6 @@ resource "azurerm_cosmosdb_mongo_collection" "item" {
   shard_key           = "_id"
 
   index {
-    keys   = ["_id"]
+    keys = ["_id"]
   }
 }

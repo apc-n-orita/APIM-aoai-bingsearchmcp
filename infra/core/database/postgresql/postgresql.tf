@@ -71,28 +71,28 @@ resource "azurerm_resource_deployment_script_azure_cli" "psql-script" {
   timeout             = "PT5M"
 
   environment_variable {
-    name              = "PSQLADMINNAME"
-    value             = azurerm_postgresql_flexible_server.psql_server.administrator_login
+    name  = "PSQLADMINNAME"
+    value = azurerm_postgresql_flexible_server.psql_server.administrator_login
   }
   environment_variable {
-    name              = "PSQLADMINPASSWORD"
-    value             = random_password.password[0].result
+    name  = "PSQLADMINPASSWORD"
+    value = random_password.password[0].result
   }
   environment_variable {
-    name              = "PSQLUSERNAME"
-    value             = local.psqlUserName
+    name  = "PSQLUSERNAME"
+    value = local.psqlUserName
   }
   environment_variable {
-    name              = "PSQLUSERPASSWORD"
-    value             = random_password.password[1].result
+    name  = "PSQLUSERPASSWORD"
+    value = random_password.password[1].result
   }
   environment_variable {
-    name              = "DBNAME"
-    value             = var.database_name
+    name  = "DBNAME"
+    value = var.database_name
   }
   environment_variable {
-    name              = "DBSERVER"
-    value             = azurerm_postgresql_flexible_server.psql_server.fqdn
+    name  = "DBSERVER"
+    value = azurerm_postgresql_flexible_server.psql_server.fqdn
   }
 
   script_content = <<-EOT
@@ -107,5 +107,5 @@ resource "azurerm_resource_deployment_script_azure_cli" "psql-script" {
       psql "host=$DBSERVER user=$PSQLADMINNAME dbname=$DBNAME port=5432 password=$PSQLADMINPASSWORD sslmode=require" < create_user.sql
   EOT
 
-  depends_on = [ azurerm_postgresql_flexible_server_database.database ]
+  depends_on = [azurerm_postgresql_flexible_server_database.database]
 }
