@@ -111,7 +111,7 @@ Grafana による可視化ダッシュボードはオプションです。興味
 
    ```json
    {
-     "servers": {
+     "mcpServers": {
        "bingsearch-server": {
          "type": "sse",
          "url": "<出力されたSERVICE_BINGSEARCHMCP_ENDPOINTS>",
