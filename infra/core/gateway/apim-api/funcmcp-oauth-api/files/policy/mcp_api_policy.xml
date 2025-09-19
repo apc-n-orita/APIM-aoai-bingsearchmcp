@@ -39,12 +39,30 @@
         <set-header name="x-functions-key" exists-action="override">
             <value>{{function-host-key}}</value>
         </set-header>
+        <choose>
+            <when condition="@(context.Request.Method == "GET")">
+                <set-header name="Accept" exists-action="override">
+                    <value>text/event-stream</value>
+                </set-header>
+                <set-header name="Cache-Control" exists-action="override">
+                    <value>no-cache</value>
+                </set-header>
+            </when>
+        </choose>
     </inbound>
     <backend>
-        <base />
+        <!-- ★ SSEはバッファ無効が必須 -->
+        <forward-request buffer-response="false" timeout="300" />
     </backend>
     <outbound>
         <base />
+        <choose>
+            <when condition="@(context.Request.Method == "GET")">
+                <set-header name="Content-Type" exists-action="override">
+                    <value>text/event-stream</value>
+                </set-header>
+            </when>
+        </choose>
     </outbound>
     <on-error>
         <base />
