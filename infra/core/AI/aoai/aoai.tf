@@ -37,7 +37,7 @@ resource "azurerm_cognitive_account_rai_policy" "contentpolicy" {
     name               = "Violence"
     filter_enabled     = true
     block_enabled      = true
-    severity_threshold = "High"
+    severity_threshold = "Low"
     source             = "Prompt"
   }
 
@@ -45,7 +45,7 @@ resource "azurerm_cognitive_account_rai_policy" "contentpolicy" {
     name               = "Hate"
     filter_enabled     = true
     block_enabled      = true
-    severity_threshold = "High"
+    severity_threshold = "Low"
     source             = "Prompt"
   }
 
@@ -53,7 +53,7 @@ resource "azurerm_cognitive_account_rai_policy" "contentpolicy" {
     name               = "Sexual"
     filter_enabled     = true
     block_enabled      = true
-    severity_threshold = "High"
+    severity_threshold = "Low"
     source             = "Prompt"
   }
 
@@ -61,7 +61,7 @@ resource "azurerm_cognitive_account_rai_policy" "contentpolicy" {
     name               = "Selfharm"
     filter_enabled     = true
     block_enabled      = true
-    severity_threshold = "High"
+    severity_threshold = "Low"
     source             = "Prompt"
   }
 
@@ -70,7 +70,7 @@ resource "azurerm_cognitive_account_rai_policy" "contentpolicy" {
     name               = "Violence"
     filter_enabled     = true
     block_enabled      = true
-    severity_threshold = "High"
+    severity_threshold = "Low"
     source             = "Completion"
   }
 
@@ -78,7 +78,7 @@ resource "azurerm_cognitive_account_rai_policy" "contentpolicy" {
     name               = "Hate"
     filter_enabled     = true
     block_enabled      = true
-    severity_threshold = "High"
+    severity_threshold = "Low"
     source             = "Completion"
   }
 
@@ -86,7 +86,7 @@ resource "azurerm_cognitive_account_rai_policy" "contentpolicy" {
     name               = "Sexual"
     filter_enabled     = true
     block_enabled      = true
-    severity_threshold = "High"
+    severity_threshold = "Low"
     source             = "Completion"
   }
 
@@ -94,7 +94,7 @@ resource "azurerm_cognitive_account_rai_policy" "contentpolicy" {
     name               = "Selfharm"
     filter_enabled     = true
     block_enabled      = true
-    severity_threshold = "High"
+    severity_threshold = "Low"
     source             = "Completion"
   }
 }
