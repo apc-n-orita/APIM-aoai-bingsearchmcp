@@ -29,7 +29,7 @@ resource "azurerm_api_management_api" "mcp" {
   resource_group_name   = var.resource_group_name
   api_management_name   = data.azurerm_api_management.apim.name
   revision              = "1"
-  display_name          = "${upper(var.api_name)} MCP API"
+  display_name          = "${upper(var.api_name)}-MCP-API"
   path                  = lower(var.api_name)
   protocols             = ["https"]
   service_url           = "${var.func_url}/runtime/webhooks/mcp"

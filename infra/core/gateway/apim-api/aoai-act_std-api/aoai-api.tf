@@ -27,8 +27,9 @@ resource "azurerm_api_management_api" "openai" {
   resource_group_name   = data.azurerm_resource_group.rg.name
   api_management_name   = data.azurerm_api_management.apim.name
   revision              = "1"
-  display_name          = "openai api"
+  display_name          = "openai-api"
   path                  = "openai"
+  description           = "Azure Open AI API"
   protocols             = ["https"]
   subscription_required = true
 
