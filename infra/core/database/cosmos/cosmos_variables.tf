@@ -46,3 +46,9 @@ variable "log_analytics_workspace_id" {
   description = "Log Analytics workspace ID"
   type        = string
 }
+
+variable "default_ttl" {
+  description = "Default TTL (in seconds) for items in the Cosmos DB SQL container. Use -1 for infinite TTL."
+  type        = number
+  default     = -1
+}

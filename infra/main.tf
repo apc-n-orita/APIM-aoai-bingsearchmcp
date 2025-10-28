@@ -586,4 +586,9 @@ module "cosmos_sql_oauth" {
   api_management_name           = module.apim.APIM_SERVICE_NAME
   public_network_access_enabled = true
   log_analytics_workspace_id    = azurerm_log_analytics_workspace.law.id
+  #OAuth認証時に "State parameter does not match consented state." エラーが発生することがある
+  #VSCodeでクライアントIDを毎回リセットする必要があり、未使用のクライアントIDがDBに蓄積されてしまう
+  #その対策として、default_ttl を 86400（24時間）に設定し、不要なクライアントIDが自動的に期限切れになるようにした
+  default_ttl = 86400
 }
+

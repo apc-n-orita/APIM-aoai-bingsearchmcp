@@ -62,6 +62,7 @@ resource "azurerm_cosmosdb_sql_container" "container" {
   resource_group_name = azurerm_cosmosdb_account.sql.resource_group_name
   account_name        = azurerm_cosmosdb_account.sql.name
   database_name       = azurerm_cosmosdb_sql_database.db.name
+  default_ttl         = var.default_ttl
 
   # Partition key paths must be an array per provider schema.
   partition_key_paths   = ["/clientId"]
