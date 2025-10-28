@@ -1,18 +1,11 @@
-<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <!--
     Consent Policy - Handles user consent for OAuth client applications
-    
-    Flow:
-    1. Check existing consent status (cookies)
-    2. Display consent form for new clients
-    3. Process user response (allow/deny)
-    4. Store decision and redirect appropriately
 -->
 <policies>
-    <inbound>        
-        <base />        
-        <!-- Helper function to extract parameters from form/query -->
-        <set-variable name="form_body" value="@{
+	<inbound>
+		<base />
+		<!-- Extract form body once -->
+		<set-variable name="form_body" value="@{
             if (context.Request.Method == "POST") {
                 string contentType = context.Request.Headers.GetValueOrDefault("Content-Type", "");
                 if (contentType.Contains("application/x-www-form-urlencoded")) {
@@ -21,9 +14,8 @@
             }
             return "";
         }" />
-        
-        <!-- Extract request parameters using consolidated logic -->
-        <set-variable name="client_id" value="@{
+		<!-- Extract individual parameters with consistent decoding -->
+		<set-variable name="client_id" value="@{
             string formBody = context.Variables.GetValueOrDefault<string>("form_body", "");
             
             // Check form data first (POST)
@@ -36,11 +28,12 @@
                     }
                 }
             }
+            
             // Fallback to query string (GET)
-            return (string)context.Request.Url.Query.GetValueOrDefault("client_id", "");
+            string queryValue = (string)context.Request.Url.Query.GetValueOrDefault("client_id", "");
+            return !string.IsNullOrEmpty(queryValue) ? System.Net.WebUtility.UrlDecode(queryValue) : "";
         }" />
-        
-        <set-variable name="redirect_uri" value="@{
+		<set-variable name="redirect_uri" value="@{
             string formBody = context.Variables.GetValueOrDefault<string>("form_body", "");
             
             // Check form data first (POST)
@@ -49,15 +42,15 @@
                 foreach (string pair in pairs) {
                     string[] keyValue = pair.Split(new char[] {'='}, 2);
                     if (keyValue.Length == 2 && keyValue[0] == "redirect_uri") {
-                        return keyValue[1]; // Keep encoded for normalization
+                        return keyValue[1];
                     }
                 }
             }
+            
             // Fallback to query string (GET)
             return (string)context.Request.Url.Query.GetValueOrDefault("redirect_uri", "");
         }" />
-        
-        <set-variable name="state" value="@{
+		<set-variable name="state" value="@{
             string formBody = context.Variables.GetValueOrDefault<string>("form_body", "");
             
             // Check form data first (POST)
@@ -66,15 +59,16 @@
                 foreach (string pair in pairs) {
                     string[] keyValue = pair.Split(new char[] {'='}, 2);
                     if (keyValue.Length == 2 && keyValue[0] == "state") {
-                        return keyValue[1]; // Keep encoded
+                        return System.Net.WebUtility.UrlDecode(keyValue[1]);
                     }
                 }
             }
+            
             // Fallback to query string (GET)
-            return (string)context.Request.Url.Query.GetValueOrDefault("state", "") ?? "";
+            string queryValue = (string)context.Request.Url.Query.GetValueOrDefault("state", "");
+            return !string.IsNullOrEmpty(queryValue) ? System.Net.WebUtility.UrlDecode(queryValue) : "";
         }" />
-        
-        <set-variable name="code_challenge" value="@{
+		<set-variable name="code_challenge" value="@{
             string formBody = context.Variables.GetValueOrDefault<string>("form_body", "");
             
             // Check form data first (POST)
@@ -83,15 +77,15 @@
                 foreach (string pair in pairs) {
                     string[] keyValue = pair.Split(new char[] {'='}, 2);
                     if (keyValue.Length == 2 && keyValue[0] == "code_challenge") {
-                        return keyValue[1]; // Keep encoded
+                        return keyValue[1];
                     }
                 }
             }
+            
             // Fallback to query string (GET)
             return (string)context.Request.Url.Query.GetValueOrDefault("code_challenge", "");
         }" />
-        
-        <set-variable name="code_challenge_method" value="@{
+		<set-variable name="code_challenge_method" value="@{
             string formBody = context.Variables.GetValueOrDefault<string>("form_body", "");
             
             // Check form data first (POST)
@@ -100,17 +94,16 @@
                 foreach (string pair in pairs) {
                     string[] keyValue = pair.Split(new char[] {'='}, 2);
                     if (keyValue.Length == 2 && keyValue[0] == "code_challenge_method") {
-                        return keyValue[1]; // Keep encoded
+                        return keyValue[1];
                     }
                 }
             }
+            
             // Fallback to query string (GET)
             return (string)context.Request.Url.Query.GetValueOrDefault("code_challenge_method", "");
         }" />
-      
-         <set-variable name="access_denied_template" value="@{
-            return @"<!DOCTYPE html>
-<html lang='en'>
+		<set-variable name="access_denied_template" value="@{
+            return @"<html lang='en'>
 <head>    <meta charset='UTF-8'>
     <meta name='viewport' content='width=device-width, initial-scale=1.0'>
     <title>Access Denied</title>
@@ -160,9 +153,8 @@ __COMMON_STYLES__
 </body>
 </html>";
         }" />
-        
-        <!-- Reusable function to generate 403 error response -->
-        <set-variable name="generate_403_response" value="@{
+		<!-- Reusable function to generate 403 error response -->
+		<set-variable name="generate_403_response" value="@{
             string errorTemplate = context.Variables.GetValueOrDefault<string>("access_denied_template");
             string commonStyles = context.Variables.GetValueOrDefault<string>("common_styles");
             string message = "Access denied.";
@@ -173,10 +165,9 @@ __COMMON_STYLES__
             
             return errorTemplate;
         }" />
-            <!-- Error page template -->
-        <set-variable name="client_not_found_template" value="@{
-            return @"<!DOCTYPE html>
-<html lang='en'>
+		<!-- Error page template -->
+		<set-variable name="client_not_found_template" value="@{
+            return @"<html lang='en'>
 <head>    
     <meta charset='UTF-8'>
     <meta name='viewport' content='width=device-width, initial-scale=1.0'>
@@ -199,8 +190,8 @@ __COMMON_STYLES__
 </body>
 </html>";
         }" />
-        <!-- Normalize redirect URI by handling potential double-encoding -->
-        <set-variable name="normalized_redirect_uri" value="@{
+		<!-- Normalize redirect URI by handling potential double-encoding -->
+		<set-variable name="normalized_redirect_uri" value="@{
             string redirectUri = context.Variables.GetValueOrDefault<string>("redirect_uri", "");
             
             if (string.IsNullOrEmpty(redirectUri)) {
@@ -224,15 +215,54 @@ __COMMON_STYLES__
                 return redirectUri;
             }
         }" />
-        
-        <!-- Cache client information lookup -->
-        <cache-lookup-value key="@($"ClientInfo-{context.Variables.GetValueOrDefault<string>("client_id")}")" variable-name="clientInfoJson" />
-        
-        <!-- Get OAuth scopes from configuration -->
-        <set-variable name="oauth_scopes" value="{{OAuthScopes}}" />
-        
-        <!-- Generate CSRF token for form protection (GET requests only) -->
-        <set-variable name="csrf_token" value="@{
+		<!-- Cache client information lookup -->
+		<cache-lookup-value key="@($"ClientInfo-{context.Variables.GetValueOrDefault<string>("client_id")}")" variable-name="clientInfoJson" />
+		<!-- If cache lookup failed, try to retrieve from CosmosDB -->
+		<choose>
+			<when condition="@(string.IsNullOrEmpty(context.Variables.GetValueOrDefault<string>("clientInfoJson")))">
+				<!-- Get CosmosDB access token using managed identity -->
+				<authentication-managed-identity resource="https://cosmos.azure.com" output-token-variable-name="cosmosAccessToken" />
+				<send-request mode="new" response-variable-name="cosmosClientResponse" timeout="30" ignore-error="true">
+					<set-url>@($"{{CosmosDbEndpoint}}/dbs/{{CosmosDbDatabase}}/colls/{{CosmosDbContainer}}/docs/{context.Variables.GetValueOrDefault<string>("client_id")}")</set-url>
+					<set-method>GET</set-method>
+					<set-header name="Content-Type" exists-action="override">
+						<value>application/json</value>
+					</set-header>
+					<set-header name="x-ms-version" exists-action="override">
+						<value>2018-12-31</value>
+					</set-header>
+					<set-header name="x-ms-partitionkey" exists-action="override">
+						<value>@($"[\"{context.Variables.GetValueOrDefault<string>("client_id")}\"]")</value>
+					</set-header>
+					<set-header name="Authorization" exists-action="override">
+						<value>@($"type=aad&ver=1.0&sig={context.Variables.GetValueOrDefault<string>("cosmosAccessToken")}")</value>
+					</set-header>
+				</send-request>
+				<!-- If CosmosDB request was successful, extract client info -->
+				<choose>
+					<when condition="@(((IResponse)context.Variables["cosmosClientResponse"]).StatusCode == 200)">
+						<set-variable name="clientInfoJson" value="@{
+                            var cosmosResponse = (IResponse)context.Variables["cosmosClientResponse"];
+                            var cosmosDocument = cosmosResponse.Body.As<JObject>();
+                            
+                            // Extract the client info fields we need
+                            var clientInfo = new JObject();
+                            clientInfo["client_name"] = cosmosDocument["client_name"];
+                            clientInfo["client_uri"] = cosmosDocument["client_uri"];
+                            clientInfo["redirect_uris"] = cosmosDocument["redirect_uris"];
+                            
+                            return clientInfo.ToString();
+                        }" />
+						<!-- Store in cache for future requests -->
+						<cache-store-value duration="3600" key="@($"ClientInfo-{context.Variables.GetValueOrDefault<string>("client_id")}")" value="@(context.Variables.GetValueOrDefault<string>("clientInfoJson"))" />
+					</when>
+				</choose>
+			</when>
+		</choose>
+		<!-- Get OAuth scopes from configuration -->
+		<set-variable name="oauth_scopes" value="{{OAuthScopes}}" />
+		<!-- Generate CSRF token for form protection (GET requests only) -->
+		<set-variable name="csrf_token" value="@{
             // Only generate tokens for GET requests (showing consent form)
             // POST requests validate existing tokens, not generate new ones
             if (context.Request.Method != "GET") {
@@ -251,12 +281,10 @@ __COMMON_STYLES__
             
             return token;
         }" />
-        
-        <!-- Cache CSRF token for validation (GET requests only) -->
-        <choose>
-            <when condition="@(context.Request.Method == "GET" && !string.IsNullOrEmpty(context.Variables.GetValueOrDefault<string>("csrf_token")))">
-                <cache-store-value key="@($"CSRF-{context.Variables.GetValueOrDefault<string>("csrf_token")}")" 
-                                  value="@{
+		<!-- Cache CSRF token for validation (GET requests only) -->
+		<choose>
+			<when condition="@(context.Request.Method == "GET" && !string.IsNullOrEmpty(context.Variables.GetValueOrDefault<string>("csrf_token")))">
+				<cache-store-value key="@($"CSRF-{context.Variables.GetValueOrDefault<string>("csrf_token")}")" value="@{
                                       string clientId = context.Variables.GetValueOrDefault<string>("client_id", "");
                                       string normalizedRedirectUri = context.Variables.GetValueOrDefault<string>("normalized_redirect_uri", "");
                                       string timestamp = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ");
@@ -265,17 +293,16 @@ __COMMON_STYLES__
                                       // Add debugging metadata
                                       string debugInfo = $"CACHED_AT:{DateTime.UtcNow:yyyy-MM-ddTHH:mm:ss.fffZ}";
                                       return $"{tokenData}|{debugInfo}";
-                                  }" 
-                                  duration="900" />
-                <!-- Track token caching for debugging -->
-                <set-variable name="csrf_token_cached" value="true" />
-            </when>
-            <otherwise>
-                <set-variable name="csrf_token_cached" value="false" />
-            </otherwise>
-        </choose>
-          <!-- Validate client registration -->
-        <set-variable name="is_client_registered" value="@{
+                                  }" duration="900" />
+				<!-- Track token caching for debugging -->
+				<set-variable name="csrf_token_cached" value="true" />
+			</when>
+			<otherwise>
+				<set-variable name="csrf_token_cached" value="false" />
+			</otherwise>
+		</choose>
+		<!-- Validate client registration -->
+		<set-variable name="is_client_registered" value="@{
             try {
                 string clientId = context.Variables.GetValueOrDefault<string>("client_id", "");
                 string redirectUri = context.Variables.GetValueOrDefault<string>("normalized_redirect_uri", "");
@@ -311,9 +338,8 @@ __COMMON_STYLES__
                 return false;
             }
         }" />
-        
-        <!-- Extract client name from cache -->
-        <set-variable name="client_name" value="@{
+		<!-- Extract client name from cache -->
+		<set-variable name="client_name" value="@{
             try {
                 string clientId = context.Variables.GetValueOrDefault<string>("client_id", "");
                 
@@ -338,9 +364,8 @@ __COMMON_STYLES__
                 return context.Variables.GetValueOrDefault<string>("client_id", "Unknown Application");
             }
         }" />
-        
-        <!-- Extract client URI from cache -->
-        <set-variable name="client_uri" value="@{
+		<!-- Extract client URI from cache -->
+		<set-variable name="client_uri" value="@{
             try {
                 // Get client info from cache lookup
                 string clientInfoJson = context.Variables.GetValueOrDefault<string>("clientInfoJson");
@@ -359,9 +384,8 @@ __COMMON_STYLES__
                 return "N/A";
             }
         }" />
-        
-        <!-- Define common styles for consent and error pages -->
-        <set-variable name="common_styles" value="@{
+		<!-- Define common styles for consent and error pages -->
+		<set-variable name="common_styles" value="@{
             return @"        body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             max-width: 100%;
@@ -494,11 +518,9 @@ __COMMON_STYLES__
             color: #D83B01; /* Microsoft Attention color */
         }";
         }" />
-        
-        <!-- Consent page HTML template -->
-        <set-variable name="consent_page_template" value="@{
-            return @"<!DOCTYPE html>
-<html lang='en'>
+		<!-- Consent page HTML template -->
+		<set-variable name="consent_page_template" value="@{
+            return @"<html lang='en'>
 <head>    <meta charset='UTF-8'>
     <meta name='viewport' content='width=device-width, initial-scale=1.0'>
     <title>Application Consent</title>
@@ -558,64 +580,49 @@ __COMMON_STYLES__    /* Additional styles for scopes list */
 </body>
 </html>";
         }" />
-
-        <!-- Check for existing client denial cookie -->
-        <set-variable name="has_denial_cookie" value="@{
+		<!-- Check for existing client denial cookie -->
+		<set-variable name="has_denial_cookie" value="@{
             try {
-                if (string.IsNullOrEmpty(context.Variables.GetValueOrDefault<string>("client_id", "")) || 
-                    string.IsNullOrEmpty(context.Variables.GetValueOrDefault<string>("redirect_uri", ""))) {
-                    return false;
-                }
-                  
                 string clientId = context.Variables.GetValueOrDefault<string>("client_id", "");
-                // Use normalized redirect URI for consistency
                 string redirectUri = context.Variables.GetValueOrDefault<string>("normalized_redirect_uri", "");
                 
-                // Cookie name for client denials
-                string DENIAL_COOKIE_NAME = "MCP_DENIED_CLIENTS";
+                if (string.IsNullOrEmpty(clientId) || string.IsNullOrEmpty(redirectUri)) {
+                    return false;
+                }
                 
-                // Check for denial cookie in request
                 var cookieHeader = context.Request.Headers.GetValueOrDefault("Cookie", "");
                 if (string.IsNullOrEmpty(cookieHeader)) {
                     return false;
                 }
                 
-                // Parse cookie header for denial cookie
+                string cookieName = "__Host-MCP_DENIED_CLIENTS";
                 string[] cookies = cookieHeader.Split(';');
                 foreach (string cookie in cookies) {
                     string trimmedCookie = cookie.Trim();
-                    if (trimmedCookie.StartsWith(DENIAL_COOKIE_NAME + "=")) {
-                        // Extract cookie value
-                        string cookieValue = trimmedCookie.Substring(DENIAL_COOKIE_NAME.Length + 1);
+                    if (trimmedCookie.StartsWith(cookieName + "=")) {
+                        string cookieValue = trimmedCookie.Substring(cookieName.Length + 1);
                         try {
-                            // Parse base64-encoded JSON array of denied clients
                             string decodedValue = System.Text.Encoding.UTF8.GetString(
                                 System.Convert.FromBase64String(cookieValue.Split('.')[0]));
-                            JArray deniedClients = JArray.Parse(decodedValue);                            
+                            JArray clients = JArray.Parse(decodedValue);
                             
-                            // Create client/redirect identifier
-                            // Use normalized redirect URI for consistency
                             string clientKey = $"{clientId}:{redirectUri}";
                             
-                            foreach (var item in deniedClients) {
+                            foreach (var item in clients) {
                                 string itemString = item.ToString();
                                 
-                                // Direct comparison using normalized URI
                                 if (itemString == clientKey) {
                                     return true;
                                 }
                                 
                                 // Handle URL-encoded redirect URI in stored cookie
                                 try {
-                                    string storedValue = itemString;
-                                    if (storedValue.Contains(':')) {
-                                        string[] parts = storedValue.Split(new char[] {':'}, 2);
+                                    if (itemString.Contains(':')) {
+                                        string[] parts = itemString.Split(new char[] {':'}, 2);
                                         if (parts.Length == 2) {
                                             string storedClientId = parts[0];
-                                            // Decode stored redirect URI for comparison
                                             string storedRedirectUri = System.Net.WebUtility.UrlDecode(parts[1]);
                                             
-                                            // Compare both decoded forms
                                             if (storedClientId == clientId && storedRedirectUri == redirectUri) {
                                                 return true;
                                             }
@@ -636,64 +643,49 @@ __COMMON_STYLES__    /* Additional styles for scopes list */
                 return false;
             }
         }" />
-        
-        <!-- Check for existing client approval cookie -->
-        <set-variable name="has_approval_cookie" value="@{
+		<!-- Check for existing client approval cookie -->
+		<set-variable name="has_approval_cookie" value="@{
             try {
-                if (string.IsNullOrEmpty(context.Variables.GetValueOrDefault<string>("client_id", "")) || 
-                    string.IsNullOrEmpty(context.Variables.GetValueOrDefault<string>("redirect_uri", ""))) {
-                    return false;
-                }
-                  
                 string clientId = context.Variables.GetValueOrDefault<string>("client_id", "");
-                // Use normalized redirect URI for consistency
                 string redirectUri = context.Variables.GetValueOrDefault<string>("normalized_redirect_uri", "");
                 
-                // Cookie name for client approvals
-                string APPROVAL_COOKIE_NAME = "MCP_APPROVED_CLIENTS";
+                if (string.IsNullOrEmpty(clientId) || string.IsNullOrEmpty(redirectUri)) {
+                    return false;
+                }
                 
-                // Check for approval cookie in request
                 var cookieHeader = context.Request.Headers.GetValueOrDefault("Cookie", "");
                 if (string.IsNullOrEmpty(cookieHeader)) {
                     return false;
                 }
                 
-                // Parse cookie header for approval cookie
+                string cookieName = "__Host-MCP_APPROVED_CLIENTS";
                 string[] cookies = cookieHeader.Split(';');
                 foreach (string cookie in cookies) {
                     string trimmedCookie = cookie.Trim();
-                    if (trimmedCookie.StartsWith(APPROVAL_COOKIE_NAME + "=")) {
-                        // Extract cookie value
-                        string cookieValue = trimmedCookie.Substring(APPROVAL_COOKIE_NAME.Length + 1);
-                        try {                            
-                            // Parse base64-encoded JSON array of approved clients
+                    if (trimmedCookie.StartsWith(cookieName + "=")) {
+                        string cookieValue = trimmedCookie.Substring(cookieName.Length + 1);
+                        try {
                             string decodedValue = System.Text.Encoding.UTF8.GetString(
                                 System.Convert.FromBase64String(cookieValue.Split('.')[0]));
-                            JArray approvedClients = JArray.Parse(decodedValue);
+                            JArray clients = JArray.Parse(decodedValue);
                             
-                            // Create client/redirect identifier
-                            // Use normalized redirect URI for consistency
                             string clientKey = $"{clientId}:{redirectUri}";
                             
-                            foreach (var item in approvedClients) {
+                            foreach (var item in clients) {
                                 string itemString = item.ToString();
                                 
-                                // Direct comparison using normalized URI
                                 if (itemString == clientKey) {
                                     return true;
                                 }
                                 
                                 // Handle URL-encoded redirect URI in stored cookie
                                 try {
-                                    string storedValue = itemString;
-                                    if (storedValue.Contains(':')) {
-                                        string[] parts = storedValue.Split(new char[] {':'}, 2);
+                                    if (itemString.Contains(':')) {
+                                        string[] parts = itemString.Split(new char[] {':'}, 2);
                                         if (parts.Length == 2) {
                                             string storedClientId = parts[0];
-                                            // Decode stored redirect URI for comparison
                                             string storedRedirectUri = System.Net.WebUtility.UrlDecode(parts[1]);
                                             
-                                            // Compare both decoded forms
                                             if (storedClientId == clientId && storedRedirectUri == redirectUri) {
                                                 return true;
                                             }
@@ -714,10 +706,10 @@ __COMMON_STYLES__    /* Additional styles for scopes list */
                 return false;
             }
         }" />
-        
-        <set-variable name="consent_action" value="@{
+		<set-variable name="consent_action" value="@{
             string formBody = context.Variables.GetValueOrDefault<string>("form_body", "");
             
+            // Check form data first (POST)
             if (!string.IsNullOrEmpty(formBody)) {
                 string[] pairs = formBody.Split('&');
                 foreach (string pair in pairs) {
@@ -726,16 +718,17 @@ __COMMON_STYLES__    /* Additional styles for scopes list */
                         return System.Net.WebUtility.UrlDecode(keyValue[1]);
                     }
                 }
-                // Fallback to JSON parsing if form parsing failed
-                return context.Request.Body.As<JObject>(preserveContent: true)["consent_action"]?.ToString() ?? "";
             }
-            return "";
+            
+            // Fallback to query string (GET)
+            string queryValue = (string)context.Request.Url.Query.GetValueOrDefault("consent_action", "");
+            return !string.IsNullOrEmpty(queryValue) ? System.Net.WebUtility.UrlDecode(queryValue) : "";
         }" />
-        
-        <!-- Extract CSRF token from form data -->
-        <set-variable name="csrf_token_from_form" value="@{
+		<!-- Extract CSRF token from form data -->
+		<set-variable name="csrf_token_from_form" value="@{
             string formBody = context.Variables.GetValueOrDefault<string>("form_body", "");
             
+            // Check form data first (POST)
             if (!string.IsNullOrEmpty(formBody)) {
                 string[] pairs = formBody.Split('&');
                 foreach (string pair in pairs) {
@@ -745,11 +738,13 @@ __COMMON_STYLES__    /* Additional styles for scopes list */
                     }
                 }
             }
-            return "";
+            
+            // Fallback to query string (GET)
+            string queryValue = (string)context.Request.Url.Query.GetValueOrDefault("csrf_token", "");
+            return !string.IsNullOrEmpty(queryValue) ? System.Net.WebUtility.UrlDecode(queryValue) : "";
         }" />
-        
-        <!-- Validate CSRF token for POST requests -->
-        <set-variable name="csrf_valid" value="@{
+		<!-- Validate CSRF token for POST requests -->
+		<set-variable name="csrf_valid" value="@{
             if (context.Request.Method != "POST") {
                 return true; // Only validate POST requests
             }
@@ -764,9 +759,8 @@ __COMMON_STYLES__    /* Additional styles for scopes list */
             
             return true; // Initial validation passes, detailed validation follows
         }" />
-        
-        <!-- Validate Origin/Referer headers for CSRF protection -->
-        <set-variable name="origin_referer_valid" value="@{
+		<!-- Validate Origin/Referer headers for CSRF protection -->
+		<set-variable name="origin_referer_valid" value="@{
             if (context.Request.Method != "POST") {
                 return true; // Only validate state-changing operations
             }
@@ -828,9 +822,8 @@ __COMMON_STYLES__    /* Additional styles for scopes list */
             // OWASP recommends blocking such requests for better security
             return false; // Block requests without proper origin validation
         }" />
-        
-        <!-- Validate Fetch Metadata headers for CSRF protection -->
-        <set-variable name="fetch_metadata_valid" value="@{
+		<!-- Validate Fetch Metadata headers for CSRF protection -->
+		<set-variable name="fetch_metadata_valid" value="@{
             // Check Sec-Fetch-Site header for cross-site request detection
             string secFetchSite = context.Request.Headers.GetValueOrDefault("Sec-Fetch-Site", "");
             
@@ -850,12 +843,10 @@ __COMMON_STYLES__    /* Additional styles for scopes list */
             // Allow other values for compatibility
             return true;
         }" />
-        
-        <!-- Lookup CSRF token from cache -->
-        <cache-lookup-value key="@($"CSRF-{context.Variables.GetValueOrDefault<string>("csrf_token_from_form")}")" variable-name="csrf_token_data" />
-        
-        <!-- Validate CSRF token details -->
-        <set-variable name="csrf_validation_result" value="@{
+		<!-- Lookup CSRF token from cache -->
+		<cache-lookup-value key="@($"CSRF-{context.Variables.GetValueOrDefault<string>("csrf_token_from_form")}")" variable-name="csrf_token_data" />
+		<!-- Validate CSRF token details -->
+		<set-variable name="csrf_validation_result" value="@{
             if (context.Request.Method != "POST") {
                 return "valid"; // No validation needed for GET requests
             }
@@ -964,90 +955,86 @@ __COMMON_STYLES__    /* Additional styles for scopes list */
                 return "validation_error";
             }
         }" />
-        
-        <!-- If this is a form submission, process the consent choice -->
-        <choose>
-            <when condition="@(context.Request.Method == "POST")">
-                <!-- Validate Origin/Referer headers -->
-                <choose>
-                    <when condition="@(!context.Variables.GetValueOrDefault<bool>("origin_referer_valid"))">
-                        <!-- Origin/Referer validation failed -->
-                        <return-response>
-                            <set-status code="403" reason="Forbidden" />
-                            <set-header name="Content-Type" exists-action="override">
-                                <value>text/html</value>
-                            </set-header>
-                            <set-header name="Cache-Control" exists-action="override">
-                                <value>no-store, no-cache</value>
-                            </set-header>
-                            <set-header name="Pragma" exists-action="override">
-                                <value>no-cache</value>
-                            </set-header>
-                            <set-body>@(context.Variables.GetValueOrDefault<string>("generate_403_response"))</set-body>
-                        </return-response>
-                    </when>
-                    <otherwise>
-                        <!-- Origin/Referer validation passed -->
-                        <!-- Validate Fetch Metadata headers -->
-                        <choose>
-                            <when condition="@(!context.Variables.GetValueOrDefault<bool>("fetch_metadata_valid"))">
-                                <!-- Fetch metadata validation failed -->
-                                <return-response>
-                                    <set-status code="403" reason="Forbidden" />
-                                    <set-header name="Content-Type" exists-action="override">
-                                        <value>text/html</value>
-                                    </set-header>
-                                    <set-header name="Cache-Control" exists-action="override">
-                                        <value>no-store, no-cache</value>
-                                    </set-header>
-                                    <set-header name="Pragma" exists-action="override">
-                                        <value>no-cache</value>
-                                    </set-header>
-                                    <set-body>@(context.Variables.GetValueOrDefault<string>("generate_403_response"))</set-body>
-                                </return-response>
-                            </when>
-                            <otherwise>
-                                <!-- Fetch metadata validation passed -->
-                                <!-- Validate CSRF token -->
-                                <choose>
-                                    <when condition="@(context.Variables.GetValueOrDefault<string>("csrf_validation_result") != "valid")">
-                                        <!-- CSRF validation failed -->
-                                        <return-response>
-                                            <set-status code="403" reason="Forbidden" />
-                                            <set-header name="Content-Type" exists-action="override">
-                                                <value>text/html</value>
-                                            </set-header>
-                                            <set-header name="Cache-Control" exists-action="override">
-                                                <value>no-store, no-cache</value>
-                                            </set-header>
-                                            <set-header name="Pragma" exists-action="override">
-                                                <value>no-cache</value>
-                                            </set-header>
-                                            <set-body>@(context.Variables.GetValueOrDefault<string>("generate_403_response"))</set-body>
-                                        </return-response>
-                                    </when>
-                                    <otherwise>
-                                        <!-- CSRF validation passed -->
-                                        <!-- Delete CSRF token from cache to prevent reuse -->
-                                        <cache-remove-value key="@($"CSRF-{context.Variables.GetValueOrDefault<string>("csrf_token_from_form")}")" />
-                                        
-                                        <choose>
-                                            <when condition="@(context.Variables.GetValueOrDefault<string>("consent_action") == "allow")">
-                        <!-- Process consent approval -->
-                        <set-variable name="response_status_code" value="302" />
-                        <set-variable name="response_redirect_location" value="@{
+		<!-- If this is a form submission, process the consent choice -->
+		<choose>
+			<when condition="@(context.Request.Method == "POST")">
+				<!-- Validate Origin/Referer headers -->
+				<choose>
+					<when condition="@(!context.Variables.GetValueOrDefault<bool>("origin_referer_valid"))">
+						<!-- Origin/Referer validation failed -->
+						<return-response>
+							<set-status code="403" reason="Forbidden" />
+							<set-header name="Content-Type" exists-action="override">
+								<value>text/html</value>
+							</set-header>
+							<set-header name="Cache-Control" exists-action="override">
+								<value>no-store, no-cache</value>
+							</set-header>
+							<set-header name="Pragma" exists-action="override">
+								<value>no-cache</value>
+							</set-header>
+							<set-body>@(context.Variables.GetValueOrDefault<string>("generate_403_response"))</set-body>
+						</return-response>
+					</when>
+					<otherwise>
+						<!-- Origin/Referer validation passed -->
+						<!-- Validate Fetch Metadata headers -->
+						<choose>
+							<when condition="@(!context.Variables.GetValueOrDefault<bool>("fetch_metadata_valid"))">
+								<!-- Fetch metadata validation failed -->
+								<return-response>
+									<set-status code="403" reason="Forbidden" />
+									<set-header name="Content-Type" exists-action="override">
+										<value>text/html</value>
+									</set-header>
+									<set-header name="Cache-Control" exists-action="override">
+										<value>no-store, no-cache</value>
+									</set-header>
+									<set-header name="Pragma" exists-action="override">
+										<value>no-cache</value>
+									</set-header>
+									<set-body>@(context.Variables.GetValueOrDefault<string>("generate_403_response"))</set-body>
+								</return-response>
+							</when>
+							<otherwise>
+								<!-- Fetch metadata validation passed -->
+								<!-- Validate CSRF token -->
+								<choose>
+									<when condition="@(context.Variables.GetValueOrDefault<string>("csrf_validation_result") != "valid")">
+										<!-- CSRF validation failed -->
+										<return-response>
+											<set-status code="403" reason="Forbidden" />
+											<set-header name="Content-Type" exists-action="override">
+												<value>text/html</value>
+											</set-header>
+											<set-header name="Cache-Control" exists-action="override">
+												<value>no-store, no-cache</value>
+											</set-header>
+											<set-header name="Pragma" exists-action="override">
+												<value>no-cache</value>
+											</set-header>
+											<set-body>@(context.Variables.GetValueOrDefault<string>("generate_403_response"))</set-body>
+										</return-response>
+									</when>
+									<otherwise>
+										<!-- CSRF validation passed -->
+										<!-- Delete CSRF token from cache to prevent reuse -->
+										<cache-remove-value key="@($"CSRF-{context.Variables.GetValueOrDefault<string>("csrf_token_from_form")}")" />
+										<choose>
+											<when condition="@(context.Variables.GetValueOrDefault<string>("consent_action") == "allow")">
+												<!-- Process consent approval -->
+												<set-variable name="response_status_code" value="302" />
+												<set-variable name="response_redirect_location" value="@{
                             string baseUrl = "{{APIMGatewayURL}}";
-                            
-                            // Use already extracted parameters instead of re-parsing form data
+
                             string clientId = context.Variables.GetValueOrDefault<string>("client_id", "");
                             string redirectUri = context.Variables.GetValueOrDefault<string>("normalized_redirect_uri", "");
-                            string state = context.Variables.GetValueOrDefault<string>("state", "");
+                            string originalState = context.Variables.GetValueOrDefault<string>("state", "");
                             
-                            // URL encode parameters to prevent injection attacks
                             string encodedClientId = System.Net.WebUtility.UrlEncode(clientId);
                             string encodedRedirectUri = System.Net.WebUtility.UrlEncode(redirectUri);
-                            // State is already properly encoded from form submission, don't double-encode
-                            string encodedState = state;
+                            // State should be used as-is since it's already properly formatted from the original request
+                            string encodedState = originalState;
                             
                             // Add PKCE parameters if they exist
                             string codeChallenge = context.Variables.GetValueOrDefault<string>("code_challenge", "");
@@ -1065,9 +1052,9 @@ __COMMON_STYLES__    /* Additional styles for scopes list */
                             
                             return url;
                         }" />
-                          <!-- Calculate approval cookie value -->
-                        <set-variable name="approval_cookie" value="@{
-                            string cookieName = "MCP_APPROVED_CLIENTS";
+												<!-- Calculate approval cookie value -->
+												<set-variable name="approval_cookie" value="@{
+                            string cookieName = "__Host-MCP_APPROVED_CLIENTS";
                             
                             // Use already extracted parameters instead of re-parsing form data
                             string clientId = context.Variables.GetValueOrDefault<string>("client_id", "");
@@ -1125,32 +1112,29 @@ __COMMON_STYLES__    /* Additional styles for scopes list */
                             // Return the full cookie string with appropriate settings
                             return $"{cookieName}={encodedClients}; Max-Age=31536000; Path=/; Secure; HttpOnly; SameSite=Lax";
                         }" />
-                        
-                        <!-- Set variables for outbound policy awareness -->
-                        <set-variable name="consent_approved" value="true" />
-                        <set-variable name="cookie_name" value="MCP_APPROVED_CLIENTS" />
-                        
-                        <!-- Return the response with the cookie already set -->
-                        <return-response>
-                            <set-status code="302" reason="Found" />
-                            <set-header name="Location" exists-action="override">
-                                <value>@(context.Variables.GetValueOrDefault<string>("response_redirect_location", ""))</value>
-                            </set-header>
-                            <set-header name="Set-Cookie" exists-action="append">
-                                <value>@(context.Variables.GetValueOrDefault<string>("approval_cookie"))</value>
-                            </set-header>
-                        </return-response>
-                    </when>
-                    <when condition="@(context.Variables.GetValueOrDefault<string>("consent_action") == "deny")">
-                        <!-- Process consent denial -->
-                        <set-variable name="response_status_code" value="403" />
-                        <set-variable name="response_content_type" value="text/html" />
-                        <set-variable name="response_cache_control" value="no-store, no-cache" />
-                        <set-variable name="response_pragma" value="no-cache" />
-                        
-                        <!-- Calculate the cookie value right here in inbound before returning response -->
-                        <set-variable name="denial_cookie" value="@{
-                            string cookieName = "MCP_DENIED_CLIENTS";
+												<!-- Set variables for outbound policy awareness -->
+												<set-variable name="consent_approved" value="true" />
+												<set-variable name="cookie_name" value="__Host-MCP_APPROVED_CLIENTS" />
+												<!-- Return the response with the cookie already set -->
+												<return-response>
+													<set-status code="302" reason="Found" />
+													<set-header name="Location" exists-action="override">
+														<value>@(context.Variables.GetValueOrDefault<string>("response_redirect_location", ""))</value>
+													</set-header>
+													<set-header name="Set-Cookie" exists-action="append">
+														<value>@(context.Variables.GetValueOrDefault<string>("approval_cookie"))</value>
+													</set-header>
+												</return-response>
+											</when>
+											<when condition="@(context.Variables.GetValueOrDefault<string>("consent_action") == "deny")">
+												<!-- Process consent denial -->
+												<set-variable name="response_status_code" value="403" />
+												<set-variable name="response_content_type" value="text/html" />
+												<set-variable name="response_cache_control" value="no-store, no-cache" />
+												<set-variable name="response_pragma" value="no-cache" />
+												<!-- Calculate the cookie value right here in inbound before returning response -->
+												<set-variable name="denial_cookie" value="@{
+                            string cookieName = "__Host-MCP_DENIED_CLIENTS";
                             
                             // Use already extracted parameters instead of re-parsing form data
                             string clientId = context.Variables.GetValueOrDefault<string>("client_id", "");
@@ -1207,8 +1191,9 @@ __COMMON_STYLES__    /* Additional styles for scopes list */
                             
                             // Return the full cookie string with appropriate settings
                             return $"{cookieName}={encodedClients}; Max-Age=31536000; Path=/; Secure; HttpOnly; SameSite=Lax";
-                        }" />                        <!-- Store the HTML content for the access denied page -->
-                        <set-variable name="response_body" value="@{
+                        }" />
+												<!-- Store the HTML content for the access denied page -->
+												<set-variable name="response_body" value="@{
                             string denialTemplate = context.Variables.GetValueOrDefault<string>("access_denied_template");
                             string commonStyles = context.Variables.GetValueOrDefault<string>("common_styles");
                             
@@ -1219,44 +1204,42 @@ __COMMON_STYLES__    /* Additional styles for scopes list */
                             
                             return denialTemplate;
                         }" />
-                        
-                        <!-- Set variables for outbound policy awareness -->
-                        <set-variable name="consent_denied" value="true" />
-                        <set-variable name="cookie_name" value="MCP_DENIED_CLIENTS" />
-                        
-                        <!-- Return the response with the cookie already set -->
-                        <return-response>
-                            <set-status code="403" reason="Forbidden" />
-                            <set-header name="Content-Type" exists-action="override">
-                                <value>text/html</value>
-                            </set-header>
-                            <set-header name="Cache-Control" exists-action="override">
-                                <value>no-store, no-cache</value>
-                            </set-header>
-                            <set-header name="Pragma" exists-action="override">
-                                <value>no-cache</value>
-                            </set-header>
-                            <set-header name="Set-Cookie" exists-action="append">
-                                <value>@(context.Variables.GetValueOrDefault<string>("denial_cookie"))</value>
-                            </set-header>
-                            <set-body>@(context.Variables.GetValueOrDefault<string>("response_body", ""))</set-body>
-                        </return-response>
-                    </when>
-                    <otherwise>
-                        <!-- Invalid consent action - return error -->
-                        <return-response>
-                            <set-status code="403" reason="Forbidden" />
-                            <set-header name="Content-Type" exists-action="override">
-                                <value>text/html</value>
-                            </set-header>
-                            <!-- Explicitly disable any redirects -->
-                            <set-header name="Cache-Control" exists-action="override">
-                                <value>no-store, no-cache</value>
-                            </set-header>
-                            <set-header name="Pragma" exists-action="override">
-                                <value>no-cache</value>
-                            </set-header>
-                            <set-body>@{
+												<!-- Set variables for outbound policy awareness -->
+												<set-variable name="consent_denied" value="true" />
+												<set-variable name="cookie_name" value="__Host-MCP_DENIED_CLIENTS" />
+												<!-- Return the response with the cookie already set -->
+												<return-response>
+													<set-status code="403" reason="Forbidden" />
+													<set-header name="Content-Type" exists-action="override">
+														<value>text/html</value>
+													</set-header>
+													<set-header name="Cache-Control" exists-action="override">
+														<value>no-store, no-cache</value>
+													</set-header>
+													<set-header name="Pragma" exists-action="override">
+														<value>no-cache</value>
+													</set-header>
+													<set-header name="Set-Cookie" exists-action="append">
+														<value>@(context.Variables.GetValueOrDefault<string>("denial_cookie"))</value>
+													</set-header>
+													<set-body>@(context.Variables.GetValueOrDefault<string>("response_body", ""))</set-body>
+												</return-response>
+											</when>
+											<otherwise>
+												<!-- Invalid consent action - return error -->
+												<return-response>
+													<set-status code="403" reason="Forbidden" />
+													<set-header name="Content-Type" exists-action="override">
+														<value>text/html</value>
+													</set-header>
+													<!-- Explicitly disable any redirects -->
+													<set-header name="Cache-Control" exists-action="override">
+														<value>no-store, no-cache</value>
+													</set-header>
+													<set-header name="Pragma" exists-action="override">
+														<value>no-cache</value>
+													</set-header>
+													<set-body>@{
                                 string denialTemplate = context.Variables.GetValueOrDefault<string>("access_denied_template");
                                 string commonStyles = context.Variables.GetValueOrDefault<string>("common_styles");
                                 string consentAction = context.Variables.GetValueOrDefault<string>("consent_action", "");
@@ -1269,23 +1252,23 @@ __COMMON_STYLES__    /* Additional styles for scopes list */
                                 
                                 return denialTemplate;
                             }</set-body>
-                        </return-response>
-                                            </otherwise>
-                                        </choose>
-                                    </otherwise>
-                                </choose>
-                            </otherwise>
-                        </choose>
-                    </otherwise>
-                </choose>
-            </when>
-            <!-- For GET requests, check for cookies first, then display consent page if no cookie found -->
-            <otherwise>
-                <choose>
-                    <!-- If there's an approval cookie, skip consent and redirect to authorization endpoint -->
-                    <when condition="@(context.Variables.GetValueOrDefault<bool>("has_approval_cookie"))">
-                        <!-- Set redirect location to authorization endpoint -->
-                        <set-variable name="response_redirect_location" value="@{
+												</return-response>
+											</otherwise>
+										</choose>
+									</otherwise>
+								</choose>
+							</otherwise>
+						</choose>
+					</otherwise>
+				</choose>
+			</when>
+			<!-- For GET requests, check for cookies first, then display consent page if no cookie found -->
+			<otherwise>
+				<choose>
+					<!-- If there's an approval cookie, skip consent and redirect to authorization endpoint -->
+					<when condition="@(context.Variables.GetValueOrDefault<bool>("has_approval_cookie"))">
+						<!-- Set redirect location to authorization endpoint -->
+						<set-variable name="response_redirect_location" value="@{
                             string baseUrl = "{{APIMGatewayURL}}";
                             string clientId = context.Variables.GetValueOrDefault<string>("client_id", "");
                             string redirectUri = context.Variables.GetValueOrDefault<string>("normalized_redirect_uri", "");
@@ -1313,31 +1296,29 @@ __COMMON_STYLES__    /* Additional styles for scopes list */
                             
                             return url;
                         }" />
-                        
-                        <!-- Redirect to authorization endpoint -->
-                        <return-response>
-                            <set-status code="302" reason="Found" />
-                            <set-header name="Location" exists-action="override">
-                                <value>@(context.Variables.GetValueOrDefault<string>("response_redirect_location", ""))</value>
-                            </set-header>
-                        </return-response>
-                    </when>
-                    
-                    <!-- If there's a denial cookie, return access denied page immediately -->
-                    <when condition="@(context.Variables.GetValueOrDefault<bool>("has_denial_cookie"))">
-                        <return-response>
-                            <set-status code="403" reason="Forbidden" />
-                            <set-header name="Content-Type" exists-action="override">
-                                <value>text/html</value>
-                            </set-header>
-                            <!-- Explicitly disable any redirects -->
-                            <set-header name="Cache-Control" exists-action="override">
-                                <value>no-store, no-cache</value>
-                            </set-header>
-                            <set-header name="Pragma" exists-action="override">
-                                <value>no-cache</value>
-                            </set-header>
-                            <set-body>@{
+						<!-- Redirect to authorization endpoint -->
+						<return-response>
+							<set-status code="302" reason="Found" />
+							<set-header name="Location" exists-action="override">
+								<value>@(context.Variables.GetValueOrDefault<string>("response_redirect_location", ""))</value>
+							</set-header>
+						</return-response>
+					</when>
+					<!-- If there's a denial cookie, return access denied page immediately -->
+					<when condition="@(context.Variables.GetValueOrDefault<bool>("has_denial_cookie"))">
+						<return-response>
+							<set-status code="403" reason="Forbidden" />
+							<set-header name="Content-Type" exists-action="override">
+								<value>text/html</value>
+							</set-header>
+							<!-- Explicitly disable any redirects -->
+							<set-header name="Cache-Control" exists-action="override">
+								<value>no-store, no-cache</value>
+							</set-header>
+							<set-header name="Pragma" exists-action="override">
+								<value>no-cache</value>
+							</set-header>
+							<set-body>@{
                                 string denialTemplate = context.Variables.GetValueOrDefault<string>("access_denied_template");
                                 string commonStyles = context.Variables.GetValueOrDefault<string>("common_styles");
                                 
@@ -1348,26 +1329,26 @@ __COMMON_STYLES__    /* Additional styles for scopes list */
                                 
                                 return denialTemplate;
                             }</set-body>
-                        </return-response>
-                    </when>
-                      <!-- If no cookies found, show the consent screen -->
-                    <otherwise>
-                        <!-- Check if client is registered first -->
-                        <choose>
-                            <when condition="@(!context.Variables.GetValueOrDefault<bool>("is_client_registered"))">
-                                <!-- Client is not registered, show error page -->
-                                <return-response>
-                                    <set-status code="403" reason="Forbidden" />
-                                    <set-header name="Content-Type" exists-action="override">
-                                        <value>text/html</value>
-                                    </set-header>
-                                    <set-header name="Cache-Control" exists-action="override">
-                                        <value>no-store, no-cache</value>
-                                    </set-header>
-                                    <set-header name="Pragma" exists-action="override">
-                                        <value>no-cache</value>
-                                    </set-header>
-                                    <set-body>@{
+						</return-response>
+					</when>
+					<!-- If no cookies found, show the consent screen -->
+					<otherwise>
+						<!-- Check if client is registered first -->
+						<choose>
+							<when condition="@(!context.Variables.GetValueOrDefault<bool>("is_client_registered"))">
+								<!-- Client is not registered, show error page -->
+								<return-response>
+									<set-status code="403" reason="Forbidden" />
+									<set-header name="Content-Type" exists-action="override">
+										<value>text/html</value>
+									</set-header>
+									<set-header name="Cache-Control" exists-action="override">
+										<value>no-store, no-cache</value>
+									</set-header>
+									<set-header name="Pragma" exists-action="override">
+										<value>no-cache</value>
+									</set-header>
+									<set-body>@{
                                         string template = context.Variables.GetValueOrDefault<string>("client_not_found_template");
                                         string commonStyles = context.Variables.GetValueOrDefault<string>("common_styles");
                                         string clientId = context.Variables.GetValueOrDefault<string>("client_id", "");
@@ -1380,11 +1361,12 @@ __COMMON_STYLES__    /* Additional styles for scopes list */
                                         
                                         return template;
                                     }</set-body>
-                                </return-response>
-                            </when>
-                            <otherwise>                                <!-- Client is registered, get client name from the cache -->
-                                <!-- Build consent page using the standardized template -->
-                                <set-variable name="consent_page" value="@{
+								</return-response>
+							</when>
+							<otherwise>
+								<!-- Client is registered, get client name from the cache -->
+								<!-- Build consent page using the standardized template -->
+								<set-variable name="consent_page" value="@{
                                     string template = context.Variables.GetValueOrDefault<string>("consent_page_template");
                                     string commonStyles = context.Variables.GetValueOrDefault<string>("common_styles");
                                     
@@ -1423,9 +1405,8 @@ __COMMON_STYLES__    /* Additional styles for scopes list */
                                     template = template.Replace("__REDIRECT_URI__", System.Net.WebUtility.HtmlEncode(normalizedRedirectUri));
                                     // For form field values, use HtmlEncode for XSS protection
                                     template = template.Replace("__CLIENT_ID_FORM__", System.Net.WebUtility.HtmlEncode(clientId));
-                                    // State needs to be URL-decoded first since it comes URL-encoded from query, then HTML-encoded for form safety
-                                    string decodedState = System.Net.WebUtility.UrlDecode(state);
-                                    template = template.Replace("__STATE__", System.Net.WebUtility.HtmlEncode(decodedState));
+                                    // State should be HTML-encoded for form safety (don't URL-decode first as it may already be in correct format)
+                                    template = template.Replace("__STATE__", System.Net.WebUtility.HtmlEncode(state));
                                     template = template.Replace("__CODE_CHALLENGE__", System.Net.WebUtility.HtmlEncode(context.Variables.GetValueOrDefault<string>("code_challenge", "")));
                                     template = template.Replace("__CODE_CHALLENGE_METHOD__", System.Net.WebUtility.HtmlEncode(context.Variables.GetValueOrDefault<string>("code_challenge_method", "")));
                                     template = template.Replace("__CSRF_TOKEN__", System.Net.WebUtility.HtmlEncode(csrfToken));
@@ -1443,196 +1424,75 @@ __COMMON_STYLES__    /* Additional styles for scopes list */
                                 // Replace form field placeholder with encoded URI
                                 template = template.Replace(FORM_FIELD_PLACEHOLDER, htmlEncodedFormUri);                                    return template;
                                 }" />
-                                
-                                <!-- Return consent page -->
-                                <return-response>
-                                    <set-status code="200" reason="OK" />
-                                    <set-header name="Content-Type" exists-action="override">
-                                        <value>text/html</value>
-                                    </set-header>
-                                    <!-- Security headers -->
-                                    <set-header name="X-Frame-Options" exists-action="override">
-                                        <value>DENY</value>
-                                    </set-header>
-                                    <set-header name="X-Content-Type-Options" exists-action="override">
-                                        <value>nosniff</value>
-                                    </set-header>
-                                    <set-header name="X-XSS-Protection" exists-action="override">
-                                        <value>1; mode=block</value>
-                                    </set-header>
-                                    <set-header name="Referrer-Policy" exists-action="override">
-                                        <value>strict-origin-when-cross-origin</value>
-                                    </set-header>
-                                    <set-header name="Content-Security-Policy" exists-action="override">
-                                        <value>default-src 'self'; style-src 'unsafe-inline'; script-src 'none'; object-src 'none'; base-uri 'self'; form-action 'self' https:</value>
-                                    </set-header>
-                                    <set-header name="Cache-Control" exists-action="override">
-                                        <value>no-store, no-cache, must-revalidate</value>
-                                    </set-header>
-                                    <set-header name="Pragma" exists-action="override">
-                                        <value>no-cache</value>
-                                    </set-header>
-                                    <set-body>@{
+								<!-- Return consent page -->
+								<return-response>
+									<set-status code="200" reason="OK" />
+									<set-header name="Content-Type" exists-action="override">
+										<value>text/html</value>
+									</set-header>
+									<!-- Security headers -->
+									<set-header name="X-Frame-Options" exists-action="override">
+										<value>DENY</value>
+									</set-header>
+									<set-header name="X-Content-Type-Options" exists-action="override">
+										<value>nosniff</value>
+									</set-header>
+									<set-header name="X-XSS-Protection" exists-action="override">
+										<value>1; mode=block</value>
+									</set-header>
+									<set-header name="Referrer-Policy" exists-action="override">
+										<value>strict-origin-when-cross-origin</value>
+									</set-header>
+									<set-header name="Content-Security-Policy" exists-action="override">
+										<value>default-src 'self'; style-src 'unsafe-inline'; script-src 'none'; object-src 'none'; base-uri 'self'; form-action 'self' https:</value>
+									</set-header>
+									<set-header name="Cache-Control" exists-action="override">
+										<value>no-store, no-cache, must-revalidate</value>
+									</set-header>
+									<set-header name="Pragma" exists-action="override">
+										<value>no-cache</value>
+									</set-header>
+									<!-- Store the state parameter in a secure cookie for validation -->
+									<set-header name="Set-Cookie" exists-action="append">
+										<value>@{
+                                            string state = context.Variables.GetValueOrDefault<string>("state", "");
+                                            string clientId = context.Variables.GetValueOrDefault<string>("client_id", "");
+                                            string redirectUri = context.Variables.GetValueOrDefault<string>("normalized_redirect_uri", "");
+                                            
+                                            // Create consent context data
+                                            var consentData = new JObject {
+                                                ["state"] = state,
+                                                ["clientId"] = clientId,
+                                                ["redirectUri"] = redirectUri,
+                                                ["timestamp"] = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ")
+                                            };
+                                            
+                                            // Base64 encode the consent data
+                                            string consentDataJson = consentData.ToString(Newtonsoft.Json.Formatting.None);
+                                            string encodedConsentData = System.Convert.ToBase64String(
+                                                System.Text.Encoding.UTF8.GetBytes(consentDataJson));
+                                            
+                                            return $"__Host-MCP_CONSENT_STATE={encodedConsentData}; Max-Age=900; Path=/; Secure; HttpOnly; SameSite=Lax";
+                                        }</value>
+									</set-header>
+									<set-body>@{
                                         return context.Variables.GetValueOrDefault<string>("consent_page", "");
                                     }</set-body>
-                                </return-response>
-                            </otherwise>
-                        </choose>
-                    </otherwise>
-                </choose>
-            </otherwise>
-        </choose>
-    </inbound>
-    <backend>
-        <base />
-    </backend>
-    <outbound>
-        <base />
-        <!-- Debug trace for variable verification -->
-        <trace source="outbound-debug" severity="information">
-            <message>@{
-                return $"Outbound policy: consent_approved={context.Variables.GetValueOrDefault<bool>("consent_approved")}, consent_denied={context.Variables.GetValueOrDefault<bool>("consent_denied")}, cookie_name={context.Variables.GetValueOrDefault<string>("cookie_name")}";
-            }</message>
-        </trace>
-        
-        <!-- Set cookies based on consent decision -->
-        <choose>
-            <!-- Handle approval cookie -->
-            <when condition="@(context.Variables.GetValueOrDefault<bool>("consent_approved"))">
-                <set-header name="Set-Cookie" exists-action="append">
-                    <value>@{
-                        string cookieName = context.Variables.GetValueOrDefault<string>("cookie_name", "MCP_APPROVED_CLIENTS");
-                        string clientId = context.Variables.GetValueOrDefault<string>("client_id", "");
-                        // Use normalized redirect URI for cookies
-                        string redirectUri = context.Variables.GetValueOrDefault<string>("normalized_redirect_uri", "");
-                        
-                        // Create unique client/redirect identifier
-                        string clientKey = $"{clientId}:{redirectUri}";
-                        
-                        // Check for existing cookie
-                        var cookieHeader = context.Request.Headers.GetValueOrDefault("Cookie", "");
-                        JArray approvedClients = new JArray();
-                        
-                        if (!string.IsNullOrEmpty(cookieHeader)) {
-                            // Parse cookies to find approval cookie
-                            string[] cookies = cookieHeader.Split(';');
-                            foreach (string cookie in cookies) {
-                                string trimmedCookie = cookie.Trim();
-                                if (trimmedCookie.StartsWith(cookieName + "=")) {
-                                    try {
-                                        // Extract and parse cookie value
-                                        string cookieValue = trimmedCookie.Substring(cookieName.Length + 1);
-                                        // Get payload part (before first dot if signed)
-                                        string payload = cookieValue.Contains('.') ? 
-                                            cookieValue.Split('.')[0] : cookieValue;
-                                        string decodedValue = System.Text.Encoding.UTF8.GetString(
-                                            System.Convert.FromBase64String(payload));
-                                        approvedClients = JArray.Parse(decodedValue);
-                                    } catch (Exception) {
-                                        // If parsing fails, create new cookie
-                                        approvedClients = new JArray();
-                                    }
-                                    break;
-                                }
-                            }
-                        }
-                        
-                        // Add the current client if not already in the list
-                        bool clientExists = false;
-                        foreach (var item in approvedClients) {
-                            if (item.ToString() == clientKey) {
-                                clientExists = true;
-                                break;
-                            }
-                        }
-                        
-                        if (!clientExists) {
-                            approvedClients.Add(clientKey);
-                        }
-                        
-                        // Base64 encode the client list
-                        string jsonClients = approvedClients.ToString(Newtonsoft.Json.Formatting.None);
-                        string encodedClients = System.Convert.ToBase64String(
-                            System.Text.Encoding.UTF8.GetBytes(jsonClients));
-                        
-                        // Return the cookie with appropriate settings
-                        return $"{cookieName}={encodedClients}; Max-Age=31536000; Path=/; Secure; HttpOnly; SameSite=Lax";
-                    }</value>
-                </set-header>
-                
-                <!-- Set response status and redirect for approval -->
-                <set-status code="@(context.Variables.GetValueOrDefault<int>("response_status_code", 302))" reason="Found" />
-                <set-header name="Location" exists-action="override">
-                    <value>@(context.Variables.GetValueOrDefault<string>("response_redirect_location", ""))</value>
-                </set-header>
-            </when>
-            
-            <!-- Handle denial cookie -->
-            <when condition="@(context.Variables.GetValueOrDefault<bool>("consent_denied"))">
-                <set-header name="Set-Cookie" exists-action="append">
-                    <value>@{
-                        string cookieName = context.Variables.GetValueOrDefault<string>("cookie_name", "MCP_DENIED_CLIENTS");
-                        string clientId = context.Variables.GetValueOrDefault<string>("client_id", "");
-                        // Use normalized redirect URI for cookies
-                        string redirectUri = context.Variables.GetValueOrDefault<string>("normalized_redirect_uri", "");
-                        
-                        // Create unique client/redirect identifier
-                        string clientKey = $"{clientId}:{redirectUri}";
-                        
-                        // Check for existing cookie
-                        var cookieHeader = context.Request.Headers.GetValueOrDefault("Cookie", "");
-                        JArray deniedClients = new JArray();
-                        
-                        if (!string.IsNullOrEmpty(cookieHeader)) {
-                            // Parse cookies to find denial cookie
-                            string[] cookies = cookieHeader.Split(';');
-                            foreach (string cookie in cookies) {
-                                string trimmedCookie = cookie.Trim();
-                                if (trimmedCookie.StartsWith(cookieName + "=")) {
-                                    try {
-                                        // Extract and parse cookie value
-                                        string cookieValue = trimmedCookie.Substring(cookieName.Length + 1);
-                                        // Get payload part (before first dot if signed)
-                                        string payload = cookieValue.Contains('.') ? 
-                                            cookieValue.Split('.')[0] : cookieValue;
-                                        string decodedValue = System.Text.Encoding.UTF8.GetString(
-                                            System.Convert.FromBase64String(payload));
-                                        deniedClients = JArray.Parse(decodedValue);
-                                    } catch (Exception) {
-                                        // If parsing fails, create new cookie
-                                        deniedClients = new JArray();
-                                    }
-                                    break;
-                                }
-                            }
-                        }
-                        
-                        // Add client if not already in list
-                        bool clientExists = false;
-                        foreach (var item in deniedClients) {
-                            if (item.ToString() == clientKey) {
-                                clientExists = true;
-                                break;
-                            }
-                        }
-                        
-                        if (!clientExists) {
-                            deniedClients.Add(clientKey);
-                        }
-                        
-                        // Base64 encode client list
-                        string jsonClients = deniedClients.ToString(Newtonsoft.Json.Formatting.None);
-                        string encodedClients = System.Convert.ToBase64String(
-                            System.Text.Encoding.UTF8.GetBytes(jsonClients));
-                        
-                        // Return cookie with security settings
-                        return $"{cookieName}={encodedClients}; Max-Age=31536000; Path=/; Secure; HttpOnly; SameSite=Lax";
-                    }</value>
-                </set-header>
-            </when>
-        </choose>
-    </outbound>
-    <on-error>
-        <base />
-    </on-error>
+								</return-response>
+							</otherwise>
+						</choose>
+					</otherwise>
+				</choose>
+			</otherwise>
+		</choose>
+	</inbound>
+	<backend>
+		<base />
+	</backend>
+	<outbound>
+		<base />
+	</outbound>
+	<on-error>
+		<base />
+	</on-error>
 </policies>

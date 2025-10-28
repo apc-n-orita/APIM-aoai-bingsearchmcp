@@ -1,5 +1,5 @@
 locals {
-  tags           = { azd-env-name : var.environment_name }
+  tags           = { azd-env-name : var.environment_name, owner : "n-orita" }
   sha            = base64encode(sha256("${var.environment_name}${var.location}${data.azurerm_client_config.current.subscription_id}"))
   resource_token = substr(replace(lower(local.sha), "[^A-Za-z0-9_]", ""), 0, 13)
   apim = {
@@ -122,6 +122,14 @@ resource "azurecaf_name" "rg_name" {
   name          = var.environment_name
   resource_type = "azurerm_resource_group"
   random_length = 0
+  clean_input   = true
+}
+
+resource "azurecaf_name" "cosmos_sql_name" {
+  name          = var.environment_name
+  resource_type = "azurerm_cosmosdb_account"
+  random_length = 0
+  prefixes      = ["oauth"]
   clean_input   = true
 }
 
@@ -519,6 +527,9 @@ module "oauth_api" {
   entra_app_display_name      = "mcp-oauth-test-${substr(local.resource_token, 0, 3)}"
   entra_app_uami_principal_id = azurerm_user_assigned_identity.apim_entraid.principal_id
   azureuser_object_id         = data.azuread_client_config.current.object_id
+  cosmos_db_account_name      = module.cosmos_sql_oauth.cosmos_sql_account_name
+  cosmos_db_database_name     = module.cosmos_sql_oauth.cosmos_sql_database_name
+  cosmos_db_container_name    = module.cosmos_sql_oauth.cosmos_sql_container_name
 }
 
 
@@ -565,4 +576,14 @@ ${join("\n", [
 }
 
 
-
+module "cosmos_sql_oauth" {
+  source                        = "./core/database/cosmos"
+  sql_account_name              = azurecaf_name.cosmos_sql_name.result
+  database_name                 = "oauthdb"
+  location                      = var.location
+  resource_group_name           = azurerm_resource_group.rg.name
+  tags                          = local.tags
+  api_management_name           = module.apim.APIM_SERVICE_NAME
+  public_network_access_enabled = true
+  log_analytics_workspace_id    = azurerm_log_analytics_workspace.law.id
+}
