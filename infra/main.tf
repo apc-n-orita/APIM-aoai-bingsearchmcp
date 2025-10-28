@@ -1,5 +1,5 @@
 locals {
-  tags           = { azd-env-name : var.environment_name }
+  tags           = { azd-env-name : var.environment_name, owner : "n-orita" }
   sha            = base64encode(sha256("${var.environment_name}${var.location}${data.azurerm_client_config.current.subscription_id}"))
   resource_token = substr(replace(lower(local.sha), "[^A-Za-z0-9_]", ""), 0, 13)
   apim = {
@@ -588,7 +588,7 @@ module "cosmos_sql_oauth" {
   log_analytics_workspace_id    = azurerm_log_analytics_workspace.law.id
   #OAuth認証時に "State parameter does not match consented state." エラーが発生することがある
   #VSCodeでクライアントIDを毎回リセットする必要があり、未使用のクライアントIDがDBに蓄積されてしまう
-  #その対策として、default_ttl を 86400（24時間）に設定し、不要なクライアントIDが自動的に期限切れになるようにした
-  default_ttl = 86400
+  #その対策として、default_ttl を 10,800（3時間）に設定し、不要なクライアントIDが自動的に期限切れになるようにした
+  default_ttl = 10800
 }
 
