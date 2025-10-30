@@ -231,7 +231,7 @@ __COMMON_STYLES__
 					<set-header name="x-ms-version" exists-action="override">
 						<value>2018-12-31</value>
 					</set-header>
-					<set-header name="x-ms-partitionkey" exists-action="override">
+					<set-header name="x-ms-documentdb-partitionkey" exists-action="override">
 						<value>@($"[\"{context.Variables.GetValueOrDefault<string>("client_id")}\"]")</value>
 					</set-header>
 					<set-header name="Authorization" exists-action="override">

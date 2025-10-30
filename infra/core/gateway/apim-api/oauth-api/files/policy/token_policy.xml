@@ -181,7 +181,7 @@
                     <set-header name="x-ms-version" exists-action="override">
                         <value>2018-12-31</value>
                     </set-header>
-                    <set-header name="x-ms-partitionkey" exists-action="override">
+                    <set-header name="x-ms-documentdb-partitionkey" exists-action="override">
                         <value>@($"[\"{context.Variables.GetValueOrDefault<string>("client_id")}\"]")</value>
                     </set-header>
                     <set-header name="Authorization" exists-action="override">
@@ -277,7 +277,7 @@
             {
                 access_token = accessToken,
                 token_type = "Bearer",
-                expires_in = 3600,
+                expires_in = {{TokenTTL}},
                 refresh_token = "",
                 scope = "openid profile email"
             };

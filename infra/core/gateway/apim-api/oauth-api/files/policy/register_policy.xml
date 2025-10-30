@@ -68,7 +68,7 @@
             </when>
         </choose>
         <!-- STEP 7: Cache the redirect URI for backward compatibility with other policies -->
-        <cache-store-value duration="3600" key="ClientRedirectUri" value="@(context.Variables.GetValueOrDefault<JObject>("requestBody")["redirect_uris"][0].ToString())" />
+        <cache-store-value duration="{{TokenTTL}}" key="ClientRedirectUri" value="@(context.Variables.GetValueOrDefault<JObject>("requestBody")["redirect_uris"][0].ToString())" />
         <!-- Store client info by client ID for easy lookup during consent -->
         <cache-store-value duration="3600" key="@($"ClientInfo-{context.Variables.GetValueOrDefault<string>("uniqueClientId")}")" value="@{
                 var requestBody = context.Variables.GetValueOrDefault<JObject>("requestBody");

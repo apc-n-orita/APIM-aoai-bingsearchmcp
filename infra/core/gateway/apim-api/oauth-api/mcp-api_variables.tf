@@ -48,3 +48,9 @@ variable "cosmos_db_container_name" {
   type        = string
   description = "The name of the Cosmos DB container."
 }
+
+variable "token_ttl_seconds" {
+  type        = string
+  description = "The TTL (in seconds) for tokens issued by the OAuth API."
+  default     = "3600"
+}

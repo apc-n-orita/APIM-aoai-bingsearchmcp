@@ -200,9 +200,9 @@
         }" />
         <!-- STEP 10: Store the encrypted session key and Entra token in cache -->
         <!-- Store the encrypted session key with the MCP confirmation code as key -->
-        <cache-store-value duration="3600" key="@($"AccessToken-{context.Variables.GetValueOrDefault("mcpConfirmConsentCode")}")" value="@($"{context.Variables.GetValueOrDefault("encryptedSessionKey")}")" />
+        <cache-store-value duration="{{TokenTTL}}" key="@($"AccessToken-{context.Variables.GetValueOrDefault("mcpConfirmConsentCode")}")" value="@($"{context.Variables.GetValueOrDefault("encryptedSessionKey")}")" />
         <!-- Store the Entra token for later use -->
-        <cache-store-value duration="3600" key="@($"EntraToken-{context.Variables.GetValueOrDefault("sessionId")}")" value="@(context.Response.Body.As<JObject>(preserveContent: true).ToString())" />
+        <cache-store-value duration="{{TokenTTL}}" key="@($"EntraToken-{context.Variables.GetValueOrDefault("sessionId")}")" value="@(context.Response.Body.As<JObject>(preserveContent: true).ToString())" />
         <!-- STEP 11: Redirect back to MCP client with confirmation code -->
         <return-response>
             <set-status code="302" reason="Found" />

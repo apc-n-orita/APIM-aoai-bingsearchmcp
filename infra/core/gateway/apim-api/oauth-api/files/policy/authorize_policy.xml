@@ -176,11 +176,11 @@
 		<!-- Generate a confirmation code to return to the MCP client -->
 		<set-variable name="mcpConfirmConsentCode" value="@((string)Guid.NewGuid().ToString())" />
 		<!-- Store code verifier for token exchange using client state -->
-		<cache-store-value duration="3600" key="@("CodeVerifier-"+context.Variables.GetValueOrDefault("currentState", ""))" value="@(context.Variables.GetValueOrDefault("codeVerifier", ""))" />
+		<cache-store-value duration="{{TokenTTL}}" key="@("CodeVerifier-"+context.Variables.GetValueOrDefault("currentState", ""))" value="@(context.Variables.GetValueOrDefault("codeVerifier", ""))" />
 		<!-- Map client state to MCP confirmation code for callback -->
-		<cache-store-value duration="3600" key="@((string)context.Variables.GetValueOrDefault("currentState"))" value="@(context.Variables.GetValueOrDefault("mcpConfirmConsentCode", ""))" />
+		<cache-store-value duration="{{TokenTTL}}" key="@((string)context.Variables.GetValueOrDefault("currentState"))" value="@(context.Variables.GetValueOrDefault("mcpConfirmConsentCode", ""))" />
 		<!-- Store MCP client data -->
-		<cache-store-value duration="3600" key="@($"McpClientAuthData-{context.Variables.GetValueOrDefault("mcpConfirmConsentCode")}")" value="@{
+		<cache-store-value duration="{{TokenTTL}}" key="@($"McpClientAuthData-{context.Variables.GetValueOrDefault("mcpConfirmConsentCode")}")" value="@{
                 return new JObject{
                     ["mcpClientCodeChallenge"] = (string)context.Variables["mcpClientCodeChallenge"],
                     ["mcpClientCodeChallengeMethod"] = (string)context.Variables["mcpClientCodeChallengeMethod"],
