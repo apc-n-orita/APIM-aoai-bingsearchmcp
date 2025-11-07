@@ -29,6 +29,7 @@
 | <a name="module_aoai_api"></a> [aoai\_api](#module\_aoai\_api) | ./core/gateway/apim-api/aoai-act_std-api | n/a |
 | <a name="module_apim"></a> [apim](#module\_apim) | ./core/gateway/apim | n/a |
 | <a name="module_bingsearchmcp"></a> [bingsearchmcp](#module\_bingsearchmcp) | ./app/function/app | n/a |
+| <a name="module_cosmos_sql_oauth"></a> [cosmos\_sql\_oauth](#module\_cosmos\_sql\_oauth) | ./core/database/cosmos | n/a |
 | <a name="module_fC-appserviceplan"></a> [fC-appserviceplan](#module\_fC-appserviceplan) | ./core/host/appserviceplan | n/a |
 | <a name="module_func-role"></a> [func-role](#module\_func-role) | ./app/function/role | n/a |
 | <a name="module_func-storage"></a> [func-storage](#module\_func-storage) | ./core/storage | n/a |
@@ -51,6 +52,7 @@
 | [azurecaf_name.apim_appinsights_name](https://registry.terraform.io/providers/aztfmod/azurecaf/latest/docs/resources/name) | resource |
 | [azurecaf_name.apim_name](https://registry.terraform.io/providers/aztfmod/azurecaf/latest/docs/resources/name) | resource |
 | [azurecaf_name.appserviceplan_name](https://registry.terraform.io/providers/aztfmod/azurecaf/latest/docs/resources/name) | resource |
+| [azurecaf_name.cosmos_sql_name](https://registry.terraform.io/providers/aztfmod/azurecaf/latest/docs/resources/name) | resource |
 | [azurecaf_name.func_appinsights_name](https://registry.terraform.io/providers/aztfmod/azurecaf/latest/docs/resources/name) | resource |
 | [azurecaf_name.functionapp_name](https://registry.terraform.io/providers/aztfmod/azurecaf/latest/docs/resources/name) | resource |
 | [azurecaf_name.law_name](https://registry.terraform.io/providers/aztfmod/azurecaf/latest/docs/resources/name) | resource |
