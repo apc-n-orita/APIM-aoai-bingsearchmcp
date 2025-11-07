@@ -32,6 +32,7 @@ resource "azurerm_monitor_diagnostic_setting" "storage_blob_diagnostics" {
   enabled_log { category = "StorageRead" }
   enabled_log { category = "StorageWrite" }
   enabled_log { category = "StorageDelete" }
+  enabled_metric { category = "Transaction" }
 }
 
 # Table サービスの診断設定
@@ -43,6 +44,7 @@ resource "azurerm_monitor_diagnostic_setting" "storage_table_diagnostics" {
   enabled_log { category = "StorageRead" }
   enabled_log { category = "StorageWrite" }
   enabled_log { category = "StorageDelete" }
+  enabled_metric { category = "Transaction" }
 }
 
 # Queue サービスの診断設定
@@ -54,6 +56,7 @@ resource "azurerm_monitor_diagnostic_setting" "storage_queue_diagnostics" {
   enabled_log { category = "StorageRead" }
   enabled_log { category = "StorageWrite" }
   enabled_log { category = "StorageDelete" }
+  enabled_metric { category = "Transaction" }
 }
 
 

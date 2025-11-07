@@ -125,6 +125,14 @@ resource "azurecaf_name" "rg_name" {
   clean_input   = true
 }
 
+resource "azurecaf_name" "cosmos_sql_name" {
+  name          = var.environment_name
+  resource_type = "azurerm_cosmosdb_account"
+  random_length = 0
+  prefixes      = ["oauth"]
+  clean_input   = true
+}
+
 resource "azurecaf_name" "law_name" {
   name          = var.environment_name
   resource_type = "azurerm_log_analytics_workspace"
@@ -519,6 +527,11 @@ module "oauth_api" {
   entra_app_display_name      = "mcp-oauth-test-${substr(local.resource_token, 0, 3)}"
   entra_app_uami_principal_id = azurerm_user_assigned_identity.apim_entraid.principal_id
   azureuser_object_id         = data.azuread_client_config.current.object_id
+  cosmos_db_account_name      = module.cosmos_sql_oauth.cosmos_sql_account_name
+  cosmos_db_database_name     = module.cosmos_sql_oauth.cosmos_sql_database_name
+  cosmos_db_container_name    = module.cosmos_sql_oauth.cosmos_sql_container_name
+  # oauth token TTL in seconds
+  token_ttl_seconds = 18000
 }
 
 
@@ -565,4 +578,16 @@ ${join("\n", [
 }
 
 
+module "cosmos_sql_oauth" {
+  source                        = "./core/database/cosmos"
+  sql_account_name              = azurecaf_name.cosmos_sql_name.result
+  database_name                 = "oauthdb"
+  location                      = var.location
+  resource_group_name           = azurerm_resource_group.rg.name
+  tags                          = local.tags
+  api_management_name           = module.apim.APIM_SERVICE_NAME
+  public_network_access_enabled = true
+  log_analytics_workspace_id    = azurerm_log_analytics_workspace.law.id
+  default_ttl                   = 18000
+}
 

@@ -2,6 +2,7 @@
 .terraform/
 .roo/
 .devcontainer/
+.vscode/
 # .tfstate files
 *.tfstate
 *.tfstate.*

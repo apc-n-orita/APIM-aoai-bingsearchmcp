@@ -3,39 +3,46 @@
 
 | Name | Version |
 |------|---------|
-| <a name="requirement_azurecaf"></a> [azurecaf](#requirement\_azurecaf) | ~>1.2.24 |
-| <a name="requirement_azurerm"></a> [azurerm](#requirement\_azurerm) | ~>3.97.1 |
+| <a name="requirement_azurerm"></a> [azurerm](#requirement\_azurerm) | ~>4.42.0 |
 
 ## Providers
 
 | Name | Version |
 |------|---------|
-| <a name="provider_azurecaf"></a> [azurecaf](#provider\_azurecaf) | ~>1.2.24 |
-| <a name="provider_azurerm"></a> [azurerm](#provider\_azurerm) | ~>3.97.1 |
+| <a name="provider_azurerm"></a> [azurerm](#provider\_azurerm) | ~>4.42.0 |
 
 ## Resources
 
 | Name | Type |
 |------|------|
-| [azurecaf_name.db_acc_name](https://registry.terraform.io/providers/aztfmod/azurecaf/latest/docs/resources/name) | resource |
-| [azurerm_cosmosdb_account.db](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/cosmosdb_account) | resource |
-| [azurerm_cosmosdb_mongo_collection.item](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/cosmosdb_mongo_collection) | resource |
-| [azurerm_cosmosdb_mongo_collection.list](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/cosmosdb_mongo_collection) | resource |
-| [azurerm_cosmosdb_mongo_database.mongodb](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/cosmosdb_mongo_database) | resource |
+| [azurerm_cosmosdb_account.sql](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/cosmosdb_account) | resource |
+| [azurerm_cosmosdb_sql_container.container](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/cosmosdb_sql_container) | resource |
+| [azurerm_cosmosdb_sql_database.db](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/cosmosdb_sql_database) | resource |
+| [azurerm_cosmosdb_sql_role_assignment.builtin_data_contributor](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/cosmosdb_sql_role_assignment) | resource |
+| [azurerm_monitor_diagnostic_setting.cosmos_sql](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/monitor_diagnostic_setting) | resource |
+| [azurerm_api_management.apim](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/data-sources/api_management) | data source |
 
 ## Inputs
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
-| <a name="input_location"></a> [location](#input\_location) | The supported Azure location where the resource deployed | `string` | n/a | yes |
-| <a name="input_resource_token"></a> [resource\_token](#input\_resource\_token) | A suffix string to centrally mitigate resource name collisions. | `string` | n/a | yes |
-| <a name="input_rg_name"></a> [rg\_name](#input\_rg\_name) | The name of the resource group to deploy resources into | `string` | n/a | yes |
-| <a name="input_tags"></a> [tags](#input\_tags) | A list of tags used for deployed services. | `map(string)` | n/a | yes |
+| <a name="input_api_management_name"></a> [api\_management\_name](#input\_api\_management\_name) | API Management service name | `string` | n/a | yes |
+| <a name="input_database_name"></a> [database\_name](#input\_database\_name) | Cosmos SQL database name | `string` | n/a | yes |
+| <a name="input_location"></a> [location](#input\_location) | Azure location | `string` | n/a | yes |
+| <a name="input_log_analytics_workspace_id"></a> [log\_analytics\_workspace\_id](#input\_log\_analytics\_workspace\_id) | Log Analytics workspace ID | `string` | n/a | yes |
+| <a name="input_resource_group_name"></a> [resource\_group\_name](#input\_resource\_group\_name) | Resource group name | `string` | n/a | yes |
+| <a name="input_sql_account_name"></a> [sql\_account\_name](#input\_sql\_account\_name) | Cosmos DB SQL API account name (unique globally). 指定なければ命名接頭辞 + 'sql' を推奨 | `string` | n/a | yes |
+| <a name="input_container_name"></a> [container\_name](#input\_container\_name) | Cosmos SQL container name | `string` | `"clientregistrations"` | no |
+| <a name="input_default_ttl"></a> [default\_ttl](#input\_default\_ttl) | Default TTL (in seconds) for items in the Cosmos DB SQL container. Use -1 for infinite TTL. | `number` | `-1` | no |
+| <a name="input_public_network_access_enabled"></a> [public\_network\_access\_enabled](#input\_public\_network\_access\_enabled) | Enable public network access to Cosmos DB account | `bool` | `false` | no |
+| <a name="input_tags"></a> [tags](#input\_tags) | Tags map | `map(string)` | `{}` | no |
 
 ## Outputs
 
 | Name | Description |
 |------|-------------|
-| <a name="output_AZURE_COSMOS_CONNECTION_STRING"></a> [AZURE\_COSMOS\_CONNECTION\_STRING](#output\_AZURE\_COSMOS\_CONNECTION\_STRING) | n/a |
-| <a name="output_AZURE_COSMOS_DATABASE_NAME"></a> [AZURE\_COSMOS\_DATABASE\_NAME](#output\_AZURE\_COSMOS\_DATABASE\_NAME) | n/a |
+| <a name="output_cosmos_sql_account_name"></a> [cosmos\_sql\_account\_name](#output\_cosmos\_sql\_account\_name) | n/a |
+| <a name="output_cosmos_sql_container_name"></a> [cosmos\_sql\_container\_name](#output\_cosmos\_sql\_container\_name) | n/a |
+| <a name="output_cosmos_sql_database_name"></a> [cosmos\_sql\_database\_name](#output\_cosmos\_sql\_database\_name) | n/a |
+| <a name="output_cosmos_sql_endpoint"></a> [cosmos\_sql\_endpoint](#output\_cosmos\_sql\_endpoint) | n/a |
 <!-- END_TF_DOCS -->

@@ -146,6 +146,42 @@ resource "azurerm_api_management_named_value" "EncryptionKey" {
   secret              = true
 }
 
+resource "azurerm_api_management_named_value" "CosmosDbEndpoint" {
+  name                = "CosmosDbEndpoint"
+  resource_group_name = var.resource_group_name
+  api_management_name = data.azurerm_api_management.apim.name
+  display_name        = "CosmosDbEndpoint"
+  value               = "https://${var.cosmos_db_account_name}.documents.azure.com:443"
+  secret              = false
+}
+
+resource "azurerm_api_management_named_value" "CosmosDbContainer" {
+  name                = "CosmosDbContainer"
+  resource_group_name = var.resource_group_name
+  api_management_name = data.azurerm_api_management.apim.name
+  display_name        = "CosmosDbContainer"
+  value               = var.cosmos_db_container_name
+  secret              = false
+}
+
+resource "azurerm_api_management_named_value" "CosmosDbDatabase" {
+  name                = "CosmosDbDatabase"
+  resource_group_name = var.resource_group_name
+  api_management_name = data.azurerm_api_management.apim.name
+  display_name        = "CosmosDbDatabase"
+  value               = var.cosmos_db_database_name
+  secret              = false
+}
+
+resource "azurerm_api_management_named_value" "token_ttl" {
+  name                = "TokenTTL"
+  resource_group_name = var.resource_group_name
+  api_management_name = data.azurerm_api_management.apim.name
+  display_name        = "TokenTTL"
+  value               = var.token_ttl_seconds
+  secret              = false
+}
+
 # --- OAuth API ---
 resource "azurerm_api_management_api" "oauth" {
   name                  = "oauth"
@@ -229,7 +265,11 @@ resource "azurerm_api_management_api_operation_policy" "oauth_authorize_policy" 
     azurerm_api_management_named_value.oauth_callback_uri,
     azurerm_api_management_named_value.oauth_scopes,
     azurerm_api_management_named_value.EncryptionIV,
-    azurerm_api_management_named_value.EncryptionKey
+    azurerm_api_management_named_value.EncryptionKey,
+    azurerm_api_management_named_value.CosmosDbEndpoint,
+    azurerm_api_management_named_value.CosmosDbDatabase,
+    azurerm_api_management_named_value.CosmosDbContainer,
+    azurerm_api_management_named_value.token_ttl,
   ]
 }
 
@@ -260,7 +300,11 @@ resource "azurerm_api_management_api_operation_policy" "oauth_token_policy" {
     azurerm_api_management_named_value.oauth_callback_uri,
     azurerm_api_management_named_value.oauth_scopes,
     azurerm_api_management_named_value.EncryptionIV,
-    azurerm_api_management_named_value.EncryptionKey
+    azurerm_api_management_named_value.EncryptionKey,
+    azurerm_api_management_named_value.CosmosDbEndpoint,
+    azurerm_api_management_named_value.CosmosDbDatabase,
+    azurerm_api_management_named_value.CosmosDbContainer,
+    azurerm_api_management_named_value.token_ttl,
   ]
 }
 
@@ -291,7 +335,11 @@ resource "azurerm_api_management_api_operation_policy" "oauth_callback_policy" {
     azurerm_api_management_named_value.oauth_callback_uri,
     azurerm_api_management_named_value.oauth_scopes,
     azurerm_api_management_named_value.EncryptionIV,
-    azurerm_api_management_named_value.EncryptionKey
+    azurerm_api_management_named_value.EncryptionKey,
+    azurerm_api_management_named_value.CosmosDbEndpoint,
+    azurerm_api_management_named_value.CosmosDbDatabase,
+    azurerm_api_management_named_value.CosmosDbContainer,
+    azurerm_api_management_named_value.token_ttl,
   ]
 }
 
@@ -322,7 +370,11 @@ resource "azurerm_api_management_api_operation_policy" "oauth_register_policy" {
     azurerm_api_management_named_value.oauth_callback_uri,
     azurerm_api_management_named_value.oauth_scopes,
     azurerm_api_management_named_value.EncryptionIV,
-    azurerm_api_management_named_value.EncryptionKey
+    azurerm_api_management_named_value.EncryptionKey,
+    azurerm_api_management_named_value.CosmosDbEndpoint,
+    azurerm_api_management_named_value.CosmosDbDatabase,
+    azurerm_api_management_named_value.CosmosDbContainer,
+    azurerm_api_management_named_value.token_ttl,
   ]
 }
 
@@ -353,7 +405,11 @@ resource "azurerm_api_management_api_operation_policy" "oauth_register_options_p
     azurerm_api_management_named_value.oauth_callback_uri,
     azurerm_api_management_named_value.oauth_scopes,
     azurerm_api_management_named_value.EncryptionIV,
-    azurerm_api_management_named_value.EncryptionKey
+    azurerm_api_management_named_value.EncryptionKey,
+    azurerm_api_management_named_value.CosmosDbEndpoint,
+    azurerm_api_management_named_value.CosmosDbDatabase,
+    azurerm_api_management_named_value.CosmosDbContainer,
+    azurerm_api_management_named_value.token_ttl,
   ]
 }
 
@@ -384,7 +440,11 @@ resource "azurerm_api_management_api_operation_policy" "oauth_metadata_options_p
     azurerm_api_management_named_value.oauth_callback_uri,
     azurerm_api_management_named_value.oauth_scopes,
     azurerm_api_management_named_value.EncryptionIV,
-    azurerm_api_management_named_value.EncryptionKey
+    azurerm_api_management_named_value.EncryptionKey,
+    azurerm_api_management_named_value.CosmosDbEndpoint,
+    azurerm_api_management_named_value.CosmosDbDatabase,
+    azurerm_api_management_named_value.CosmosDbContainer,
+    azurerm_api_management_named_value.token_ttl,
   ]
 }
 
@@ -415,7 +475,11 @@ resource "azurerm_api_management_api_operation_policy" "oauth_metadata_get_polic
     azurerm_api_management_named_value.oauth_callback_uri,
     azurerm_api_management_named_value.oauth_scopes,
     azurerm_api_management_named_value.EncryptionIV,
-    azurerm_api_management_named_value.EncryptionKey
+    azurerm_api_management_named_value.EncryptionKey,
+    azurerm_api_management_named_value.CosmosDbEndpoint,
+    azurerm_api_management_named_value.CosmosDbDatabase,
+    azurerm_api_management_named_value.CosmosDbContainer,
+    azurerm_api_management_named_value.token_ttl,
   ]
 }
 
@@ -446,7 +510,11 @@ resource "azurerm_api_management_api_operation_policy" "oauth_consent_get_policy
     azurerm_api_management_named_value.oauth_callback_uri,
     azurerm_api_management_named_value.oauth_scopes,
     azurerm_api_management_named_value.EncryptionIV,
-    azurerm_api_management_named_value.EncryptionKey
+    azurerm_api_management_named_value.EncryptionKey,
+    azurerm_api_management_named_value.CosmosDbEndpoint,
+    azurerm_api_management_named_value.CosmosDbDatabase,
+    azurerm_api_management_named_value.CosmosDbContainer,
+    azurerm_api_management_named_value.token_ttl,
   ]
 }
 
@@ -477,6 +545,10 @@ resource "azurerm_api_management_api_operation_policy" "oauth_consent_post_polic
     azurerm_api_management_named_value.oauth_callback_uri,
     azurerm_api_management_named_value.oauth_scopes,
     azurerm_api_management_named_value.EncryptionIV,
-    azurerm_api_management_named_value.EncryptionKey
+    azurerm_api_management_named_value.EncryptionKey,
+    azurerm_api_management_named_value.CosmosDbEndpoint,
+    azurerm_api_management_named_value.CosmosDbDatabase,
+    azurerm_api_management_named_value.CosmosDbContainer,
+    azurerm_api_management_named_value.token_ttl,
   ]
 }

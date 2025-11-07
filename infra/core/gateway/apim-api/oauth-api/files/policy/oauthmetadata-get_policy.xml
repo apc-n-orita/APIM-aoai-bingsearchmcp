@@ -12,9 +12,8 @@
             </set-header>
             <set-header name="access-control-allow-origin" exists-action="override">
                 <value>*</value>
-            </set-header>                
-            <set-body>
-                {
+            </set-header>
+            <set-body>{
                     "issuer": "{{APIMGatewayURL}}",
                     "service_documentation": "https://microsoft.com/",
                     "authorization_endpoint": "{{APIMGatewayURL}}/authorize",
@@ -37,8 +36,7 @@
                     "revocation_endpoint_auth_methods_supported": [
                         "client_secret_post"
                     ]
-                }
-            </set-body>
+                }</set-body>
         </return-response>
         <base />
     </inbound>

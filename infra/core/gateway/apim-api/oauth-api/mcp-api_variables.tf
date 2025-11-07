@@ -33,3 +33,24 @@ variable "azureuser_object_id" {
   type        = string
   description = "The object ID of the Azure user."
 }
+
+variable "cosmos_db_account_name" {
+  type        = string
+  description = "The name of the Cosmos DB account."
+}
+
+variable "cosmos_db_database_name" {
+  type        = string
+  description = "The name of the Cosmos DB database."
+}
+
+variable "cosmos_db_container_name" {
+  type        = string
+  description = "The name of the Cosmos DB container."
+}
+
+variable "token_ttl_seconds" {
+  type        = string
+  description = "The TTL (in seconds) for tokens issued by the OAuth API."
+  default     = "3600"
+}

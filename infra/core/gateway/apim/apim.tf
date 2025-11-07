@@ -82,3 +82,35 @@ resource "azurerm_monitor_diagnostic_setting" "apim_logger" {
 #    }
 #  )
 #}
+
+resource "azurerm_api_management_diagnostic" "all-api" {
+  identifier                = "applicationinsights"
+  api_management_name       = azurerm_api_management.apim.name
+  resource_group_name       = var.rg_name
+  api_management_logger_id  = azapi_resource.apim_logger.id
+  sampling_percentage       = 100.0
+  always_log_errors         = true
+  log_client_ip             = true
+  verbosity                 = "information"
+  http_correlation_protocol = "Legacy"
+
+  frontend_request {
+    body_bytes     = 0
+    headers_to_log = []
+  }
+
+  frontend_response {
+    body_bytes     = 0
+    headers_to_log = []
+  }
+
+  backend_request {
+    body_bytes     = 0
+    headers_to_log = []
+  }
+
+  backend_response {
+    body_bytes     = 0
+    headers_to_log = []
+  }
+}
