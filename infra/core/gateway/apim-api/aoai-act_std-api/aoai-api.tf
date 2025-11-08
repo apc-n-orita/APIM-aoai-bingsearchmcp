@@ -68,18 +68,14 @@ resource "azapi_resource" "act_aoai_backend" {
             failureCondition = {
               count    = 2
               interval = "PT5M"
-              errorReasons = [
-                "OperationNotFound",
-                "SubscriptionKeyNotFound",
-                "SubscriptionKeyInvalid",
-                "ClientConnectionFailure",
-                "BackendConnectionFailure",
-                "ExpressionValueEvaluationFailure"
-              ]
               statusCodeRanges = [
                 {
                   min = 429
                   max = 429
+                },
+                {
+                  min = 500
+                  max = 599
                 }
               ]
             }
