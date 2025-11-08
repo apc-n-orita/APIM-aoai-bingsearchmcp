@@ -66,7 +66,7 @@ resource "azapi_resource" "act_aoai_backend" {
             acceptRetryAfter = true
             tripDuration     = "PT1M"
             failureCondition = {
-              count    = 2
+              count    = 3
               interval = "PT5M"
               statusCodeRanges = [
                 {
