@@ -44,6 +44,7 @@
 | Name | Type |
 |------|------|
 | [azapi_resource.acc_connection_aoai](https://registry.terraform.io/providers/Azure/azapi/latest/docs/resources/resource) | resource |
+| [azapi_resource.acc_connection_appinsights](https://registry.terraform.io/providers/Azure/azapi/latest/docs/resources/resource) | resource |
 | [azapi_resource.acc_connection_gwbs](https://registry.terraform.io/providers/Azure/azapi/latest/docs/resources/resource) | resource |
 | [azapi_resource.ai_foundry_project](https://registry.terraform.io/providers/Azure/azapi/latest/docs/resources/resource) | resource |
 | [azapi_resource.bing_account](https://registry.terraform.io/providers/Azure/azapi/latest/docs/resources/resource) | resource |
