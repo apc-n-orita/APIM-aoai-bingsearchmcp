@@ -31,6 +31,7 @@
 | <a name="input_log_analytics_workspace_id"></a> [log\_analytics\_workspace\_id](#input\_log\_analytics\_workspace\_id) | The ID of the Log Analytics workspace for diagnostics. | `string` | n/a | yes |
 | <a name="input_name"></a> [name](#input\_name) | The name of the AI service. | `string` | n/a | yes |
 | <a name="input_resource_group_name"></a> [resource\_group\_name](#input\_resource\_group\_name) | The name of the resource group. | `string` | n/a | yes |
+| <a name="input_disable_local_auth"></a> [disable\_local\_auth](#input\_disable\_local\_auth) | Flag to disable local authentication for the AI Foundry resource. | `bool` | `true` | no |
 | <a name="input_tags"></a> [tags](#input\_tags) | A map of tags to assign to the resource. | `map(string)` | `{}` | no |
 
 ## Outputs

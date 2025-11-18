@@ -22,7 +22,6 @@ locals {
       {
         name  = "AZURE_BING_CONNECTION_ID"
         value = azapi_resource.acc_connection_gwbs.id
-        #value = "/subscriptions/${data.azurerm_client_config.current.subscription_id}/resourceGroups/${azurerm_resource_group.rg.name}/providers/Microsoft.CognitiveServices/accounts/aif-${var.environment_name}-${substr(local.resource_token, 0, 3)}/connections/${replace(azapi_resource.bing_account.name, "-", "")}"
       },
       {
         name  = "AZURE_CLIENT_ID"
@@ -31,6 +30,10 @@ locals {
       {
         name  = "AZURE_TENANT_ID"
         value = data.azurerm_client_config.current.tenant_id
+      },
+      {
+        name  = "OTEL_SERVICE_NAME"
+        value = "bingsearch"
       }
     ]
   }
@@ -364,6 +367,7 @@ module "ai_foundry" {
   resource_group_name        = azurerm_resource_group.rg.name
   tags                       = local.tags
   log_analytics_workspace_id = azurerm_log_analytics_workspace.law.id
+  disable_local_auth         = false
 }
 
 resource "azapi_resource" "ai_foundry_project" {

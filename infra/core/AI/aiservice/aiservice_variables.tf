@@ -35,3 +35,9 @@ variable "log_analytics_workspace_id" {
   description = "The ID of the Log Analytics workspace for diagnostics."
   type        = string
 }
+
+variable "disable_local_auth" {
+  description = "Flag to disable local authentication for the AI Foundry resource."
+  type        = bool
+  default     = true
+}

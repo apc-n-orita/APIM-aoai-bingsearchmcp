@@ -33,7 +33,7 @@ resource "azapi_resource" "ai_foundry" {
 
     properties = {
       # Support both Entra ID and API Key authentication for underlining Cognitive Services account
-      disableLocalAuth = false
+      disableLocalAuth = var.disable_local_auth
 
       # Specifies that this is an AI Foundry resource
       allowProjectManagement = true
