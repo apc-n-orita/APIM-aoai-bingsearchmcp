@@ -8,3 +8,7 @@
 azure-functions
 azure-identity
 azure-ai-agents
+azure-ai-projects
+opentelemetry-sdk
+azure-monitor-opentelemetry
+azure-core
