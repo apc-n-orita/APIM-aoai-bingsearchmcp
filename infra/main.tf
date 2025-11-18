@@ -496,6 +496,34 @@ resource "azapi_resource" "acc_connection_aoai" {
   }
 }
 
+resource "azapi_resource" "acc_connection_appinsights" {
+  type                      = "Microsoft.CognitiveServices/accounts/projects/connections@2025-04-01-preview"
+  name                      = "appi-connection"
+  parent_id                 = azapi_resource.ai_foundry_project.id
+  schema_validation_enabled = false
+
+  body = {
+    properties = {
+      category      = "AppInsights"
+      target        = azurerm_application_insights.func.id
+      authType      = "ApiKey"
+      isSharedToAll = false
+      group         = "ServicesAndApps"
+      isDefault     = true
+      peRequirement = "NotRequired"
+      peStatus      = "NotApplicable"
+      credentials = {
+        key = azurerm_application_insights.func.connection_string
+      }
+      useWorkspaceManagedIdentity = false
+      metadata = {
+        ApiType    = "Azure"
+        ResourceId = azurerm_application_insights.func.id
+      }
+    }
+  }
+}
+
 module "funcmcp_api" {
   source                   = "./core/gateway/apim-api/funcmcp-api"
   resource_group_name      = azurerm_resource_group.rg.name
