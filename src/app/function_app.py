@@ -63,7 +63,7 @@ def bingsearch_mcp(context) -> str:
     search_query = context_json['arguments'].get('search_query')
     safe_query = re.sub(r"\s+", "_", str(search_query))[:10].rstrip("_")
 
-    with tracer.start_as_current_span(f"bingsearch_mcp:{safe_query}") as span:
+    with tracer.start_as_current_span(f"invoke_agent_bingsearch:{safe_query}") as span:
         try:
             span.set_attribute("search.query", search_query)
             span.set_attribute("search.engine", "bing")
